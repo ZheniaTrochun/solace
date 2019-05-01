@@ -11,6 +11,7 @@ object Messages {
   case class MessageBody(
                           buffer_id: String,
                           actions: List[Action],
+                          data: String = "",
                           in_port: Option[String] = None,
                           command: Option[String] = None,
                           hard_timeout: Option[Int] = None,
@@ -55,7 +56,7 @@ object Messages {
   implicit val headerFormat = jsonFormat2(Header)
   implicit val icmpFormat = jsonFormat2(Icmp)
   implicit val ipFormat = jsonFormat6(Ip)
-  implicit val messageBodyFormat = jsonFormat10(MessageBody)
+  implicit val messageBodyFormat = jsonFormat11(MessageBody)
   implicit val ethernetMessageFormat = jsonFormat7(EthernetMessage)
   implicit val messageFormat = jsonFormat4(Message)
   implicit val messageHolderFormat = jsonFormat2(MessageHolder)
