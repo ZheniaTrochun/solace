@@ -1,1 +1,1 @@
-![Not today](https://raw.githubusercontent.com/ZheniaTrochun/solace/master/readme-img/img.jpg)
+![Not today](img.jpg)
