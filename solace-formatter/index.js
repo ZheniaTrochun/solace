@@ -6,7 +6,7 @@ const bodyParser = require('body-parser')
 const serializer = require('./src/serializer.js')
 const deserializer = require('./src/deserializer.js')
 
-const PORT = 8081
+const PORT = 8080
 
 const app = express()
 
