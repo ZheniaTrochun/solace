@@ -20,10 +20,15 @@ class ClientSocket(socket: Socket, messageProcessor: MessageProcessor, sender: S
   def getAddress: String = s"${socket.getRemoteSocketAddress}:${socket.getPort}"
 
   def processLoop()(implicit ec: ExecutionContext): Future[Unit] = {
+    socket.setTcpNoDelay(true)
     Future {
       blocking {
-        while (!socket.isClosed && socket.isConnected) {
-          process()
+        //        while (!socket.isClosed && socket.isConnected) {
+        //          process()
+        //        }
+        process() flatMap {
+          case _ if !socket.isClosed && socket.isConnected => process()
+          case _ => Future.successful()
         }
       }
     }
@@ -38,11 +43,12 @@ class ClientSocket(socket: Socket, messageProcessor: MessageProcessor, sender: S
 
     if (data.isEmpty) {
       logger.error(s"output stream is empty! sessionId: $sessionId")
-      Future.failed(new IllegalArgumentException(s"output stream is empty! sessionId: $sessionId"))
+//      Future.failed(new IllegalArgumentException(s"output stream is empty! sessionId: $sessionId"))
+      Future.successful()
     } else {
       formatter
         .unpackOne(data)
-        .flatMap(decoded => processDecoded(decoded, sessionId))
+        .flatMap(decoded => processDecodedOne(decoded, sessionId))
     }
   }
 
@@ -66,7 +72,8 @@ class ClientSocket(socket: Socket, messageProcessor: MessageProcessor, sender: S
       sender.sendPacket(res.outMessage, sessionId, res.msgType)(socket)
     }.map(_ => ())
   }
-  def processDecoded(decoded: MessageHolder, sessionId: String)(implicit ec: ExecutionContext): Future[Unit] = {
+
+  def processDecodedOne(decoded: MessageHolder, sessionId: String)(implicit ec: ExecutionContext): Future[Unit] = {
     val processed: Either[String, ProcessingResult] = messageProcessor.processMessage(decoded, sessionId)
 
     processed.fold(
