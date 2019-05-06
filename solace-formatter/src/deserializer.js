@@ -6,6 +6,7 @@ var switchStream = new oflib.Stream();
 
 module.exports = {
     unpack: (data) => {
+        console.dir(data)
         const msgs = switchStream.process(data)
         msgs.forEach(msg => {
             if (msg.hasOwnProperty('message')) {
@@ -21,6 +22,11 @@ module.exports = {
                 console.dir(data)
             }
         })
-        return msgs
+        if (msgs.length >= 1) {
+            return msgs[0]
+        } else {
+            util.log("ZERO decoded Error")
+            console.dir(msgs)
+        }
     }
 }

@@ -11,4 +11,5 @@ libraryDependencies += "commons-io" % "commons-io" % "2.6"
 libraryDependencies += "org.onosproject" % "openflowj" % "3.2.1.onos"
 libraryDependencies += "com.softwaremill.sttp" %% "core" % "1.5.15"
 libraryDependencies += "io.spray" %%  "spray-json" % "1.3.5"
+libraryDependencies += "com.github.scredis" %% "scredis" % "2.2.4"
 

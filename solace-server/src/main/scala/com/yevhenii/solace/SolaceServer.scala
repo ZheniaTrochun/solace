@@ -5,7 +5,7 @@ import java.net.ServerSocket
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
 import com.yevhenii.solace.formatting.Formatter
-import com.yevhenii.solace.l2.L2Table
+import com.yevhenii.solace.l2.{InMemoryL2, L2Table}
 import com.yevhenii.solace.processing.{MessageProcessor, Sender}
 import com.yevhenii.solace.sockets.SocketListener
 
@@ -26,7 +26,7 @@ object SolaceServer {
 
     val formatter = new Formatter(ec)
     val sender = new Sender(formatter)
-    val l2Table = new L2Table()
+    val l2Table = new InMemoryL2()
     val processor = new MessageProcessor(l2Table, formatter)
 
     logger.info(s"Solace server started on $port")
