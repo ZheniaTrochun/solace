@@ -4,7 +4,7 @@ import com.yevhenii.solace.messages.Actions._
 import com.yevhenii.solace.messages.Matches._
 
 object Messages {
-  case class MessageHolder(message: Message, dpid: String)
+  case class MessageHolder(message: Message, dpid: Option[String])
 
   case class Header(`type`: String, xid: Int)
 
@@ -36,7 +36,7 @@ object Messages {
   case class Message(
                       header: Header,
                       body: Option[MessageBody],
-                      version: Int,
+                      version: String,
                       decodedEthernet: Option[EthernetMessage] = None
                     )
 

@@ -7,7 +7,7 @@ import com.yevhenii.solace.messages.Messages._
 
 trait MessageFormatter {
 
-  def setSyncMessage(name: String, msg: MessageHolder, dpid: String): MessageHolder = {
+  def setSyncMessage(name: String, msg: MessageHolder, dpid: Option[String]): MessageHolder = {
     MessageHolder(
       dpid = dpid,
       message = Message(
@@ -15,7 +15,7 @@ trait MessageFormatter {
           `type` = name,
           xid = msg.message.header.xid
         ),
-        version = 0x01,
+        version = "1.0",
         body = None
       )
     )
@@ -23,7 +23,7 @@ trait MessageFormatter {
 
   def setOutFloodPacket(message: Message, inPort: String, dpid: String): MessageHolder = {
     MessageHolder(
-      dpid = dpid,
+      dpid = Some(dpid),
       message = Message(
         header = Header(
           `type` = "OFTP_PACKET_OUT",
@@ -39,7 +39,7 @@ trait MessageFormatter {
             )
           )
         )),
-        version = 0x01
+        version = "1.0"
       )
     )
   }
@@ -47,9 +47,9 @@ trait MessageFormatter {
   def setFlowModPacket(message: Message, packet: EthernetMessage, inPort: String, outPort: String, dpid: String): MessageHolder = {
     val flow = extractFlow(packet)
     MessageHolder(
-      dpid = dpid,
+      dpid = Some(dpid),
       message = Message(
-        version = 0x01,
+        version = "1.0",
         header = Header(
           `type` = "OFPT_FLOW_MOD",
           xid = message.header.xid

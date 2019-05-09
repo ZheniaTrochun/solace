@@ -52,9 +52,9 @@ class MessageProcessor(
         logger.error("Ethernet message not present!")
         Left("Ethernet message not present!")
       } { decoded =>
-        l2Table.learn(messageHolder.message, decoded, messageHolder.dpid)
+        l2Table.learn(messageHolder.message, decoded, messageHolder.dpid.get)
         Right(
-          createForwardPacket(messageHolder.message, decoded, messageHolder.dpid, sessionId)
+          createForwardPacket(messageHolder.message, decoded, messageHolder.dpid.get, sessionId)
         )
       }
   }
