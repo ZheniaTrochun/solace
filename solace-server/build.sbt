@@ -12,4 +12,6 @@ libraryDependencies += "org.onosproject" % "openflowj" % "3.2.1.onos"
 libraryDependencies += "com.softwaremill.sttp" %% "core" % "1.5.15"
 libraryDependencies += "io.spray" %%  "spray-json" % "1.3.5"
 libraryDependencies += "com.github.scredis" %% "scredis" % "2.2.4"
+//libraryDependencies += "io.socket" % "socket.io-client" % "1.0.0"
+libraryDependencies += "com.corundumstudio.socketio" % "netty-socketio" % "1.7.16"
 

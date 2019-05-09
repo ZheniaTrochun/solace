@@ -7,7 +7,7 @@ var switchStream = new oflib.Stream();
 module.exports = {
     unpack: (data) => {
         console.dir(data)
-        const msgs = switchStream.process(data)
+        const msgs = switchStream.process(Buffer.from(data, 'utf-8'))
         msgs.forEach(msg => {
             if (msg.hasOwnProperty('message')) {
                 const type = obj.message.header.type
