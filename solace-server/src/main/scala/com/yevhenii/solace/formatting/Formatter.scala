@@ -53,11 +53,10 @@ class Formatter(ec: ExecutionContext) {
         .unsafeBody
         .parseJson
         .convertTo[List[MessageHolder]]
-//        .parseJson.convertTo[JsArray]
-//        .elements
-//        .map(_.convertTo[MessageHolder])
-//        .toList
-    }
+    }.map(parsed => {
+      logger.info(s"Parsed response: $parsed")
+      parsed
+    })
   }
 //
 //  def unpack(data: String): Future[List[MessageHolder]] = {

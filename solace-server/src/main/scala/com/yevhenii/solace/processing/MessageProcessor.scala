@@ -15,6 +15,8 @@ class MessageProcessor(
   type Type = String
 
   def processMessage(messageHolder: MessageHolder, sessionId: String): Either[String, ProcessingResult] = {
+    logger.info(s"processing message ${messageHolder.message.header.`type`}")
+
     messageHolder.message.header.`type` match {
       case msgType @ "OFPT_HELLO" =>
         Right(ProcessingResult(

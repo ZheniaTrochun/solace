@@ -143,6 +143,7 @@ class SocketProcessor(connection: ActorRef,
       .map(_.right.get)
 
     errors.foreach(e => log.warning(s"error during processing input for $sessionId, error: $e, decoded: ${decoded.mkString("")}"))
+    successes.foreach(res => log.info(s"Successful processed: [$res]"))
 
     Future.traverse(successes) { res =>
       senderManager.sendPacket(res.outMessage, sessionId, res.msgType)(connection)
