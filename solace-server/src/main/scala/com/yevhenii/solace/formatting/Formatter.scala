@@ -1,5 +1,6 @@
 package com.yevhenii.solace.formatting
 
+import akka.util.ByteString
 import com.softwaremill.sttp._
 import com.typesafe.config.ConfigFactory
 import com.yevhenii.solace.messages.Messages._
@@ -34,6 +35,16 @@ class Formatter(ec: ExecutionContext) {
 //        .convertTo[List[MessageHolder]]
 //    }
 //  }
+  def unpack(bytes: ByteString): Future[List[MessageHolder]] = {
+    val request = sttp.post(unpackUri).body(bytes.toByteBuffer.array())
+    Future {
+      request.send()
+        .unsafeBody
+        .parseJson
+        .convertTo[List[JsObject]]
+        .map(_.convertTo[MessageHolder])
+    }
+  }
 //
 //  def unpack(data: String): Future[List[MessageHolder]] = {
 //    val request = sttp.post(unpackUri).body(data)

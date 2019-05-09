@@ -22,11 +22,7 @@ module.exports = {
                 console.dir(data)
             }
         })
-        if (msgs.length >= 1) {
-            return msgs[0]
-        } else {
-            util.log("ZERO decoded Error")
-            console.dir(msgs)
-        }
+        console.dir(msgs)
+        return msgs
     }
 }

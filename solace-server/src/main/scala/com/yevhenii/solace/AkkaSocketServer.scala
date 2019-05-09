@@ -5,11 +5,25 @@ import java.net.InetSocketAddress
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, SupervisorStrategy}
 import akka.io._
 import akka.util.ByteString
+import com.yevhenii.solace.formatting.Formatter
+import com.yevhenii.solace.l2.InMemoryL2
+import com.yevhenii.solace.messages.Messages.MessageHolder
+import com.yevhenii.solace.processing.{MessageProcessor, Sender}
+import com.yevhenii.solace.processing.MessageProcessor.ProcessingResult
 
-class EchoManager(handlerClass: Class[_]) extends Actor with ActorLogging {
+import scala.concurrent.{ExecutionContext, Future}
+
+class Manager(handlerClass: Class[_]) extends Actor with ActorLogging {
 
   import Tcp._
   import context.system
+
+    implicit val ec = ExecutionContext.Implicits.global
+
+    val formatter = new Formatter(ec)
+    val senderManager = new Sender(formatter)
+    val l2Table = new InMemoryL2()
+    val processor = new MessageProcessor(l2Table, formatter)
 
   // there is not recovery for broken connections
   override val supervisorStrategy = SupervisorStrategy.stoppingStrategy
@@ -40,17 +54,24 @@ class EchoManager(handlerClass: Class[_]) extends Actor with ActorLogging {
 
 }
 
-object EchoHandler {
+object SocketProcessor {
   final case class Ack(offset: Int) extends Tcp.Event
 
-  def props(connection: ActorRef, remote: InetSocketAddress): Props =
-    Props(classOf[EchoHandler], connection, remote)
+  def props(connection: ActorRef, remote: InetSocketAddress,
+            messageProcessor: MessageProcessor, senderManager: Sender,
+            formatter: Formatter): Props =
+    Props(classOf[SocketProcessor], connection, remote, messageProcessor, senderManager, formatter)
 }
 
-class EchoHandler(connection: ActorRef, remote: InetSocketAddress) extends Actor with ActorLogging {
+class SocketProcessor(connection: ActorRef,
+                  remote: InetSocketAddress,
+                  messageProcessor: MessageProcessor,
+                  senderManager: Sender,
+                  formatter: Formatter
+                 ) extends Actor with ActorLogging {
 
   import Tcp._
-  import EchoHandler._
+  import SocketProcessor._
 
   val localAddress = new InetSocketAddress("0.0.0.0", 6633)
 
@@ -64,72 +85,18 @@ class EchoHandler(connection: ActorRef, remote: InetSocketAddress) extends Actor
   def writing: Receive = {
     case Received(data) =>
       connection ! Write(data, Connected(remote, localAddress))
-      log.info(s"received raw data: [$data]")
-//      buffer(data)
+      log.info(s"received raw data, size: ${data.size}")
+      formatter.unpack(data).flatMap(list => processDecoded(list, remote.toString))
 
     case Ack(ack) =>
       log.warning("ack")
-      acknowledge(ack)
 
     case CommandFailed(Write(_, Ack(ack))) =>
       log.warning("command failed")
-      connection ! ResumeWriting
-      context.become(buffering(ack))
 
     case PeerClosed =>
       log.warning("peer closed")
-      if (storage.isEmpty) context.stop(self)
-      else context.become(closing)
   }
-  //#writing
-
-  //#buffering
-  def buffering(nack: Int): Receive = {
-    var toAck = 10
-    var peerClosed = false
-
-    {
-      case Received(data)         => buffer(data)
-      case WritingResumed         => writeFirst()
-      case PeerClosed             => peerClosed = true
-      case Ack(ack) if ack < nack => acknowledge(ack)
-      case Ack(ack) =>
-        acknowledge(ack)
-        if (storage.nonEmpty) {
-          if (toAck > 0) {
-            // stay in ACK-based mode for a while
-            writeFirst()
-            toAck -= 1
-          } else {
-            // then return to NACK-based again
-            writeAll()
-            context.become(if (peerClosed) closing else writing)
-          }
-        } else if (peerClosed) context.stop(self)
-        else context.become(writing)
-    }
-  }
-  //#buffering
-
-  //#closing
-  def closing: Receive = {
-    case CommandFailed(_: Write) =>
-      connection ! ResumeWriting
-      context.become({
-
-        case WritingResumed =>
-          writeAll()
-          context.unbecome()
-
-        case ack: Int => acknowledge(ack)
-
-      }, discardOld = false)
-
-    case Ack(ack) =>
-      acknowledge(ack)
-      if (storage.isEmpty) context.stop(self)
-  }
-  //#closing
 
   override def postStop(): Unit = {
     log.info(s"transferred $transferred bytes from/to [$remote]")
@@ -164,34 +131,36 @@ class EchoHandler(connection: ActorRef, remote: InetSocketAddress) extends Actor
     }
   }
 
-  private def acknowledge(ack: Int): Unit = {
-    require(ack == storageOffset, s"received ack $ack at $storageOffset")
-    require(storage.nonEmpty, s"storage was empty at ack $ack")
+  def processDecoded(decoded: List[MessageHolder], sessionId: String)(implicit ec: ExecutionContext): Future[Unit] = {
+    val processed: List[Either[String, ProcessingResult]] =
+      decoded
+        .map(msg => messageProcessor.processMessage(msg, sessionId))
 
-    val size = storage(0).size
-    stored -= size
-    transferred += size
+    val errors =
+      processed
+        .filter(_.isLeft)
+        .map(_.left.get)
 
-    storageOffset += 1
-    storage = storage.drop(1)
+    val successes = processed
+      .filter(_.isRight)
+      .map(_.right.get)
 
-    if (suspended && stored < lowWatermark) {
-      log.debug("resuming reading")
-      connection ! ResumeReading
-      suspended = false
-    }
-  }
-  //#helpers
+    errors.foreach(e => log.warning(s"error during processing input for $sessionId, error: $e, decoded: ${decoded.mkString("")}"))
 
-  private def writeFirst(): Unit = {
-    connection ! Write(storage(0), Ack(storageOffset))
+    Future.traverse(successes) { res =>
+      senderManager.sendPacket(res.outMessage, sessionId, res.msgType)(connection)
+    }.map(_ => ())
   }
 
-  private def writeAll(): Unit = {
-    for ((data, i) <- storage.zipWithIndex) {
-      connection ! Write(data, Ack(storageOffset + i))
-    }
-  }
+  def processDecodedOne(decoded: MessageHolder, sessionId: String)(implicit ec: ExecutionContext): Future[Unit] = {
+    val processed: Either[String, ProcessingResult] = messageProcessor.processMessage(decoded, sessionId)
 
-  //#storage-omitted
+    processed.fold(
+      e => {
+        log.warning(s"error during processing input for $sessionId, error: $e, decoded: $decoded")
+        Future.failed(new IllegalArgumentException(s"error during processing input for $sessionId, error: $e, decoded: $decoded"))
+      },
+      res => senderManager.sendPacket(res.outMessage, sessionId, res.msgType)(connection)
+    )
+  }
 }
