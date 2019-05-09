@@ -40,9 +40,10 @@ class Formatter(ec: ExecutionContext) {
     Future {
       request.send()
         .unsafeBody
-        .parseJson
-        .convertTo[List[JsObject]]
+        .parseJson.convertTo[JsArray]
+        .elements
         .map(_.convertTo[MessageHolder])
+        .toList
     }
   }
 //

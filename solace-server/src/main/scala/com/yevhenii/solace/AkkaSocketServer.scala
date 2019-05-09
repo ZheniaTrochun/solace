@@ -73,20 +73,19 @@ class SocketProcessor(connection: ActorRef,
   import Tcp._
   import SocketProcessor._
 
+  implicit val ec = context.dispatcher
+
   val localAddress = new InetSocketAddress("0.0.0.0", 6633)
 
   // sign death pact: this actor terminates when connection breaks
   context.watch(connection)
 
   // start out in optimistic write-through mode
-  def receive = writing
-
-  //#writing
-  def writing: Receive = {
+  def receive: Receive = {
     case Received(data) =>
       connection ! Write(data, Connected(remote, localAddress))
       log.info(s"received raw data, size: ${data.size}")
-      formatter.unpack(data).flatMap(list => processDecoded(list, remote.toString))
+      formatter.unpack(data).flatMap(list => processDecoded(list, remote.toString))(context.dispatcher)
 
     case Ack(ack) =>
       log.warning("ack")
