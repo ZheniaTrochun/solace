@@ -2,8 +2,7 @@ package com.yevhenii.solace
 
 import java.net.ServerSocket
 
-import com.corundumstudio.socketio.listener.{ConnectListener, DataListener}
-import com.corundumstudio.socketio.{AckRequest, Configuration, SocketIOClient, SocketIOServer}
+import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
 import com.yevhenii.solace.formatting.Formatter
@@ -12,6 +11,7 @@ import com.yevhenii.solace.processing.{MessageProcessor, Sender}
 import com.yevhenii.solace.sockets.{IoSocketServer, SocketListener}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.postfixOps
 
 object SolaceServer {
 
@@ -48,42 +48,22 @@ object SolaceServer {
 //    }
 //  }
 
+  implicit val system = ActorSystem("SolaceServer", config)
+
   def main(args: Array[String]): Unit = {
 //    listen()
     logger.info("before start")
-//    new IoSocketServer(port)
 
-    val serverConf = new Configuration()
-    serverConf.setHostname("localhost")
-    serverConf.setPort(port)
 
-    val server = new SocketIOServer(serverConf)
-
-    server.addConnectListener { (client: SocketIOClient) =>
-      logger.info(s"Connected id: ${client.getSessionId} address: ${client.getRemoteAddress}")
-    }
-
-    server.addEventListener[String](
-      "message",
-      classOf[String],
-      (client: SocketIOClient, data: String, ackSender: AckRequest) => {
-        logger.info(s"Data received id: ${client.getSessionId} address: ${client.getRemoteAddress} data: $data")
-      }
-    )
-
-    server.addListeners(new DataListener[String] {
-      override def onData(client: SocketIOClient, data: String, ackSender: AckRequest): Unit = {
-        logger.info(s"LISTENER 2 data received id: ${client.getSessionId} address: ${client.getRemoteAddress} data: $data")
-      }
-    })
-
-    server.start()
-
-    logger.info("after start")
-
-    Thread.sleep(Int.MaxValue)
-
-    server.stop()
   }
 
+  def run(): Unit = {
+    import akka.actor.ActorDSL._
+    import scala.concurrent.duration._
+
+    val watcher = inbox()
+    watcher.watch(system.actorOf(Props(classOf[EchoManager], classOf[EchoHandler]), "echo"))
+    watcher.watch(system.actorOf(Props(classOf[EchoManager], classOf[SimpleEchoHandler]), "simple-echo"))
+    watcher.receive(10 minutes)
+  }
 }
