@@ -12,7 +12,7 @@ module.exports = {
             if (msg.hasOwnProperty('message')) {
                 console.log("message parsed")
                 console.dir(msg)
-                const type = obj.message.header.type
+                const type = msg.message.header.type
                 // decode ethernet message
                 if (type == 'OFPT_PACKET_IN') {
                     const packet = decode.decodeethernet(obj.message.body.data, 0)
