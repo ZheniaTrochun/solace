@@ -1,17 +1,3 @@
-package com.yevhenii.solace.sockets
-
-import com.typesafe.scalalogging.Logger
-
-
-class IoSocketServer (port: Int) {
-
-  val logger = Logger(this.getClass)
-
-  def start(port: Int) = {
-
-  }
-
-}
 //package com.yevhenii.solace.sockets
 //
 //import com.typesafe.scalalogging.Logger
