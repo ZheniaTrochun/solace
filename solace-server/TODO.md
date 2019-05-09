@@ -6,7 +6,7 @@
 6. grafana
 7. formatting service (WIP)
 8. ~~async~~
-    * make adequate async (probably reactive)
+    ~~* make adequate async (probably reactive)~~ (used akka tcp)
 9. ~~docker-compose~~
 10. docker swarm
 11. test (WIP)

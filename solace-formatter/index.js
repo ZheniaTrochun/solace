@@ -23,7 +23,8 @@ app.post('/pack', (req, res) => {
 
 app.post('/unpack', (req, res) => {
 	console.log("/unpack request received")
-	if (req.hasOwnProperty('rawData')) {
+	console.dir(req.body)
+	if (!req.body.hasOwnProperty('rawData')) {
 	    console.log("incorrect message protocol!")
 	    throw new Error(```${req.body} has invalid format, "rawData" property expected```)
 	}

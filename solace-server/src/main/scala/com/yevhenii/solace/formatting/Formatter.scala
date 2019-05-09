@@ -43,7 +43,7 @@ class Formatter(ec: ExecutionContext) {
     import Formatter.rawMessageFormat
 
     logger.info("unpacking...")
-    val rawMessage = RawMessage(new String(bytes.toByteBuffer.array())).toJson.toString()
+    val rawMessage = RawMessage(bytes.toByteBuffer.array()).toJson.toString()
     logger.info(s"raw message: $rawMessage")
     val request = sttp.post(unpackUri).body(rawMessage)
     Future {
@@ -82,7 +82,7 @@ class Formatter(ec: ExecutionContext) {
 }
 
 object Formatter {
-  case class RawMessage(rawData: String)
+  case class RawMessage(rawData: Array[Byte])
 
   implicit val rawMessageFormat: JsonFormat[RawMessage] = jsonFormat1(RawMessage)
 }
