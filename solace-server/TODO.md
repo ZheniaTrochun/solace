@@ -7,7 +7,7 @@
 7. formatting service (WIP)
 8. ~~async~~
     * make adequate async (probably reactive)
-9. docker-compose
+9. ~~docker-compose~~
 10. docker swarm
 11. test (WIP)
 12. create working model
