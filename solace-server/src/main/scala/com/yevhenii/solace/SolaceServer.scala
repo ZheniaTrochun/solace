@@ -8,7 +8,6 @@ import com.typesafe.scalalogging.Logger
 import com.yevhenii.solace.formatting.Formatter
 import com.yevhenii.solace.l2.{InMemoryL2, L2Table}
 import com.yevhenii.solace.processing.{MessageProcessor, Sender}
-import com.yevhenii.solace.sockets.{IoSocketServer, SocketListener}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps

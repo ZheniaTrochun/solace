@@ -6,10 +6,10 @@ import com.yevhenii.solace.messages.Matches._
 object Messages {
   case class MessageHolder(message: Message, dpid: String)
 
-  case class Header(`type`: String, xid: String)
+  case class Header(`type`: String, xid: Int)
 
   case class MessageBody(
-                          buffer_id: String,
+                          buffer_id: Int,
                           actions: List[Action],
                           data: String = "",
                           in_port: Option[String] = None,
