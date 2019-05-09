@@ -23,6 +23,7 @@ class Sender(formatter: Formatter)(implicit val ec: ExecutionContext) {
     formatter.pack(message)
       .map(serialized => {
         logger.info(s"Serialized message: [$serialized]")
+        serialized
       })
       .map(serialized => socket ! Write(ByteString(serialized)))
   }
