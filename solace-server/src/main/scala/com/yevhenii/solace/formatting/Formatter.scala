@@ -9,6 +9,7 @@ import spray.json._
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 class Formatter(ec: ExecutionContext) {
   val logger = Logger(classOf[Formatter])
@@ -46,17 +47,26 @@ class Formatter(ec: ExecutionContext) {
     val rawMessage = RawMessage(bytes.toByteBuffer.array()).toJson.toString()
     logger.info(s"raw message: $rawMessage")
     val request = sttp.post(unpackUri).body(rawMessage).header("Content-Type", "application/json", replaceExisting = true)
-    Future {
+
+    val resultFuture = Future {
       val resp = request.send()
       logger.info(s"response code: ${resp.code}, response: [$resp]")
+      resp
+    }.map(resp => {
       resp
         .unsafeBody
         .parseJson
         .convertTo[List[MessageHolder]]
-    }.map(parsed => {
-      logger.info(s"Parsed response: $parsed")
-      parsed
     })
+
+    resultFuture.andThen {
+      case Success(parsed) =>
+        logger.info(s"Parsed response: $parsed")
+        parsed
+
+      case Failure(e) =>
+        logger.error("Failed parsing response", e)
+    }
   }
 //
 //  def unpack(data: String): Future[List[MessageHolder]] = {
