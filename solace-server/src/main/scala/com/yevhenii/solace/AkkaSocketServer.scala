@@ -44,12 +44,10 @@ class Manager(handlerClass: Class[_]) extends Actor with ActorLogging {
       log.warning(s"cannot bind to [$local]")
       context.stop(self)
 
-    //#echo-manager
     case Connected(remote, local) =>
       log.info("received connection from {}", remote)
-      val handler = context.actorOf(Props(handlerClass, sender(), remote))
+      val handler = context.actorOf(Props(handlerClass, sender(), remote, processor, senderManager, formatter))
       sender() ! Register(handler, keepOpenOnPeerClosed = true)
-    //#echo-manager
   }
 
 }
