@@ -51,9 +51,9 @@ object SolaceServer {
   implicit val system = ActorSystem("SolaceServer", config)
 
   def main(args: Array[String]): Unit = {
-//    listen()
-    logger.info("before start")
 
+    try run()
+    finally system.terminate()
 
   }
 
@@ -63,7 +63,7 @@ object SolaceServer {
 
     val watcher = inbox()
     watcher.watch(system.actorOf(Props(classOf[EchoManager], classOf[EchoHandler]), "echo"))
-    watcher.watch(system.actorOf(Props(classOf[EchoManager], classOf[SimpleEchoHandler]), "simple-echo"))
+//    watcher.watch(system.actorOf(Props(classOf[EchoManager], classOf[SimpleEchoHandler]), "simple-echo"))
     watcher.receive(10 minutes)
   }
 }
