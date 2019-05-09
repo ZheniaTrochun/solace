@@ -9,4 +9,4 @@ echo $(docker-compose -f ../docker-compose.yaml ps)
 
 sleep 30
 
-mn --switch ovs --controller remote,ip=127.0.0.1,port=6633 --topo tree,depth=2,fanout=2 --test pingall
+mn --switch ovs,protocols=OpenFlow11 --controller remote,ip=127.0.0.1,port=6633 --topo tree,depth=2,fanout=2 --test pingall

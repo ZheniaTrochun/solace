@@ -1,16 +1,16 @@
 const util = require('util')
 const oflib = require('oflib-node');
-const ofpp = require('oflib-node/lib/ofp-1.0/ofp.js')
+const ofpp = require('oflib-node/lib/ofp-1.1/ofp.js')
 
 module.exports = {
 	packMessage: (type, obj) => {
 		console.dir(type)
 		console.dir(obj)
-		const typelower = type.toLowerCase()
+		const typelower = type.toLowerCase().replace("ofpt_", "ofp_")
 		const bufsize = ofpp.sizes[typelower] // todo
 		const buf = new Buffer(bufsize)
 
-		const pack = oflib.pack(JSON.stringify(obj), buf, 0)
+		const pack = oflib.pack(obj, buf, 0)
 
 		console.dir(pack)
 		if (!('error' in pack)) {

@@ -15,7 +15,7 @@ trait MessageFormatter {
           `type` = name,
           xid = msg.message.header.xid
         ),
-        version = "1.0",
+        version = "1.1",
         body = None
       )
     )
@@ -39,7 +39,7 @@ trait MessageFormatter {
             )
           )
         )),
-        version = "1.0"
+        version = "1.1"
       )
     )
   }
@@ -49,7 +49,7 @@ trait MessageFormatter {
     MessageHolder(
       dpid = Some(dpid),
       message = Message(
-        version = "1.0",
+        version = "1.1",
         header = Header(
           `type` = "OFPT_FLOW_MOD",
           xid = message.header.xid
