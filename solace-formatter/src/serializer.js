@@ -10,7 +10,7 @@ module.exports = {
 		const bufsize = ofpp.sizes[typelower] // todo
 		const buf = new Buffer(bufsize)
 
-		const pack = oflib.pack(obj, buf, 0)
+		const pack = oflib.pack(JSON.stringify(obj), buf, 0)
 
 		console.dir(pack)
 		if (!('error' in pack)) {
