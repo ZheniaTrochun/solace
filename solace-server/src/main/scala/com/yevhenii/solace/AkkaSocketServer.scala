@@ -61,17 +61,21 @@ class EchoHandler(connection: ActorRef, remote: InetSocketAddress) extends Actor
   //#writing
   def writing: Receive = {
     case Received(data) =>
-      connection ! Write(data, Ack(currentOffset))
-      buffer(data)
+//      connection ! Write(data, Ack(currentOffset))
+      log.info(s"received data: [${data.utf8String}]")
+//      buffer(data)
 
     case Ack(ack) =>
+      log.warning("ack")
       acknowledge(ack)
 
     case CommandFailed(Write(_, Ack(ack))) =>
+      log.warning("command failed")
       connection ! ResumeWriting
       context.become(buffering(ack))
 
     case PeerClosed =>
+      log.warning("peer closed")
       if (storage.isEmpty) context.stop(self)
       else context.become(closing)
   }
