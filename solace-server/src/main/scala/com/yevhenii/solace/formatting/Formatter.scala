@@ -4,7 +4,6 @@ import akka.util.ByteString
 import com.softwaremill.sttp._
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
-import com.yevhenii.solace.formatting.Formatter.PackRequest
 import com.yevhenii.solace.messages.Messages._
 import spray.json._
 import spray.json.DefaultJsonProtocol._
@@ -43,6 +42,9 @@ class Formatter(ec: ExecutionContext) {
   }
 
   def pack(outMessage: Message, `type`: String): Future[String] = {
+    import Formatter.PackRequest
+    import Formatter.packRequestFormat
+
     val request = sttp.post(packUri)
       .body(PackRequest(outMessage, `type`).toJson.toString)
       .header("Content-Type", "application/json", replaceExisting = true)
@@ -61,7 +63,7 @@ class Formatter(ec: ExecutionContext) {
 
 
   def unpack(bytes: ByteString): Future[List[MessageHolder]] = {
-    import Formatter._
+    import Formatter.RawMessage
     import Formatter.rawMessageFormat
 
     logger.info("unpacking...")
@@ -104,7 +106,7 @@ class Formatter(ec: ExecutionContext) {
 object Formatter {
   case class RawMessage(rawData: Array[Byte])
 
-  case class PackRequest(msg: Message, `type`: String)
+  case class PackRequest(message: Message, `type`: String)
 
   implicit val rawMessageFormat: JsonFormat[RawMessage] = jsonFormat1(RawMessage)
   implicit val packRequestFormat: JsonFormat[PackRequest] = jsonFormat2(PackRequest)
