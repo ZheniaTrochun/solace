@@ -11,6 +11,8 @@ import spray.json.DefaultJsonProtocol._
 import scala.concurrent.{ExecutionContext, Future}
 
 class Formatter(ec: ExecutionContext) {
+  import Formatter._
+
   val logger = Logger(classOf[Formatter])
   private val config = ConfigFactory.load()
 
@@ -40,9 +42,13 @@ class Formatter(ec: ExecutionContext) {
 //  }
   def unpack(bytes: ByteString): Future[List[MessageHolder]] = {
     logger.info("unpacking...")
-    val request = sttp.post(unpackUri).body(bytes.toByteBuffer.array())
+    val rawMessage = RawMessage(bytes.toByteBuffer.array()).toJson.toString()
+    logger.info(s"raw message: $rawMessage")
+    val request = sttp.post(unpackUri).body(rawMessage)
     Future {
-      request.send()
+      val resp = request.send()
+      logger.info(s"response code: ${resp.code}, response: [$resp]")
+      resp
         .unsafeBody
         .parseJson
         .convertTo[List[MessageHolder]]
@@ -72,4 +78,10 @@ class Formatter(ec: ExecutionContext) {
         .convertTo[MessageHolder]
     }
   }
+}
+
+object Formatter {
+  case class RawMessage(rawData: Array[Byte])
+
+  implicit val rawMessageFormat = jsonFormat1(RawMessage)
 }

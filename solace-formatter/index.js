@@ -23,7 +23,11 @@ app.post('/pack', (req, res) => {
 
 app.post('/unpack', (req, res) => {
 	console.log("/unpack request received")
-	const unpacked = deserializer.unpack(req.body)
+	if (req.hasOwnProperty('rawData')) {
+	    console.log("incorrect message protocol!")
+	    throw new Error(```${req.body} has invalid format, "rawData" property expected```)
+	}
+	const unpacked = deserializer.unpack(req.body.rawData)
 	console.log("unpacked...")
 	console.dir(unpacked)
 	res.send(unpacked)
