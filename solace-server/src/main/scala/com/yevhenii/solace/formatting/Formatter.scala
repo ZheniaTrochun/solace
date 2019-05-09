@@ -45,7 +45,7 @@ class Formatter(ec: ExecutionContext) {
     logger.info("unpacking...")
     val rawMessage = RawMessage(bytes.toByteBuffer.array()).toJson.toString()
     logger.info(s"raw message: $rawMessage")
-    val request = sttp.post(unpackUri).body(rawMessage)
+    val request = sttp.post(unpackUri).body(rawMessage).header("Content-Type", "application/json", replaceExisting = true)
     Future {
       val resp = request.send()
       logger.info(s"response code: ${resp.code}, response: [$resp]")

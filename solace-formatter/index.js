@@ -26,7 +26,7 @@ app.post('/unpack', (req, res) => {
 	console.dir(req.body)
 	if (!req.body.hasOwnProperty('rawData')) {
 	    console.log("incorrect message protocol!")
-	    throw new Error(```${req.body} has invalid format, "rawData" property expected```)
+	    throw new Error(`${req.body} has invalid format, "rawData" property expected`)
 	}
 	const unpacked = deserializer.unpack(req.body.rawData)
 	console.log("unpacked...")
