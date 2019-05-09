@@ -8,7 +8,8 @@ module.exports = {
 		console.dir(obj)
 		const typelower = type.toLowerCase().replace("ofpt_", "ofp_")
 		const bufsize = ofpp.sizes[typelower] // todo
-		const buf = new Buffer(bufsize)
+//		const buf = new Buffer(bufsize)
+		const buf = new Buffer(1024) // todo
 
 		const pack = oflib.pack(obj, buf, 0)
 

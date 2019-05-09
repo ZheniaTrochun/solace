@@ -25,6 +25,12 @@ module.exports = {
             }
         })
         console.dir(msgs)
+        if ((msgs.length == 1) && (msgs[0].hasOwnProperty('error'))) {
+            if (msg.error.desc.includes('OFPT_HELLO message at offset 0 has invalid length (') && (data.length > 8)) {
+                console.log("trying to drop not needed data and retry")
+                return unpack(data.substring(0, 8))
+            }
+        }
         return msgs
     }
 }
