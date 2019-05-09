@@ -17,7 +17,7 @@ app.get('/ping', (req, res) => res.send("pong"))
 
 app.post('/pack', (req, res) => {
 	console.log("/pack request received")
-	console.dir(req)
+	console.dir(req.body)
 	res.send(serializer.packMessage(req.body.message, req.body.type))
 })
 
