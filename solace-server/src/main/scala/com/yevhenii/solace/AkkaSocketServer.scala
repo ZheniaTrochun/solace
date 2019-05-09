@@ -83,7 +83,7 @@ class SocketProcessor(connection: ActorRef,
   // start out in optimistic write-through mode
   def receive: Receive = {
     case Received(data) =>
-      connection ! Write(data, Connected(remote, localAddress))
+//      connection ! Write(data, Connected(remote, localAddress))
       log.info(s"received raw data, size: ${data.size}")
       formatter.unpack(data).flatMap(list => processDecoded(list, remote.toString))(context.dispatcher)
 

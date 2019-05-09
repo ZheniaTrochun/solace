@@ -3,6 +3,7 @@ package com.yevhenii.solace.formatting
 import akka.util.ByteString
 import com.softwaremill.sttp._
 import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.Logger
 import com.yevhenii.solace.messages.Messages._
 import spray.json._
 import spray.json.DefaultJsonProtocol._
@@ -10,6 +11,7 @@ import spray.json.DefaultJsonProtocol._
 import scala.concurrent.{ExecutionContext, Future}
 
 class Formatter(ec: ExecutionContext) {
+  val logger = Logger(classOf[Formatter])
   private val config = ConfigFactory.load()
 
   private val host = config.getString("formatter.host")
@@ -37,6 +39,7 @@ class Formatter(ec: ExecutionContext) {
 //    }
 //  }
   def unpack(bytes: ByteString): Future[List[MessageHolder]] = {
+    logger.info("unpacking...")
     val request = sttp.post(unpackUri).body(bytes.toByteBuffer.array())
     Future {
       request.send()
