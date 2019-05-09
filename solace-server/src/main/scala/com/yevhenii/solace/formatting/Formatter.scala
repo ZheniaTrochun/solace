@@ -5,6 +5,7 @@ import com.softwaremill.sttp._
 import com.typesafe.config.ConfigFactory
 import com.yevhenii.solace.messages.Messages._
 import spray.json._
+import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -40,10 +41,12 @@ class Formatter(ec: ExecutionContext) {
     Future {
       request.send()
         .unsafeBody
-        .parseJson.convertTo[JsArray]
-        .elements
-        .map(_.convertTo[MessageHolder])
-        .toList
+        .parseJson
+        .convertTo[List[MessageHolder]]
+//        .parseJson.convertTo[JsArray]
+//        .elements
+//        .map(_.convertTo[MessageHolder])
+//        .toList
     }
   }
 //
