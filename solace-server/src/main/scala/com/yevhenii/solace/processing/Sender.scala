@@ -19,7 +19,7 @@ class Sender(formatter: Formatter)(implicit val ec: ExecutionContext) {
   }
 
   def sendPacket(message: MessageHolder, sessionId: String, `type`: String)(socket: ActorRef): Future[Unit] = {
-    logger.info(s"sending message: $`type`, sessionId: $sessionId")
+    logger.info(s"sending message: ${`type`}, sessionId: $sessionId")
     formatter.pack(message)
       .map(serialized => {
         logger.info(s"Serialized message: [$serialized]")
