@@ -1,0 +1,25 @@
+version: '3.3'
+
+services:
+  solace:
+    image: solace:latest
+    build:
+      context: ./solace-server
+    ports:
+      - "6633:6633"
+    networks:
+      - solace-net
+    depends_on:
+      - formatter
+
+  formatter:
+    image: formatter:latest
+    build:
+      context: ./solace-formatter
+    ports:
+      - "8080:8080"
+    networks:
+      - solace-net
+
+networks:
+  solace-net:
