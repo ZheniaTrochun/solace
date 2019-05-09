@@ -23,8 +23,10 @@ app.post('/pack', (req, res) => {
 
 app.post('/unpack', (req, res) => {
 	console.log("/unpack request received")
-	console.dir(req)
-	res.send(deserializer.unpack(req.body))
+	const unpacked = deserializer.unpack(req.body)
+	console.log("unpacked...")
+	console.dir(unpacked)
+	res.send(unpacked)
 })
 
 app.listen(PORT, () => util.log(`Formatter started on port ${PORT}`))

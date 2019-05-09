@@ -10,6 +10,8 @@ module.exports = {
         const msgs = switchStream.process(Buffer.from(data, 'utf-8'))
         msgs.forEach(msg => {
             if (msg.hasOwnProperty('message')) {
+                console.log("message parsed")
+                console.dir(msg)
                 const type = obj.message.header.type
                 // decode ethernet message
                 if (type == 'OFPT_PACKET_IN') {
