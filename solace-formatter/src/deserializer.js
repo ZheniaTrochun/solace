@@ -3,7 +3,7 @@ const oflib = require('oflib-node')
 const decode = require('./decoder.js')
 
 function unpackData(data) {
-    const switchStream = new oflib.Stream();
+    const switchStream = new oflib.Stream()
     console.dir(data)
     const msgs = switchStream.process(Buffer.from(data, 'utf-8'))
     msgs.forEach(msg => {
@@ -13,7 +13,7 @@ function unpackData(data) {
             const type = msg.message.header.type
             // decode ethernet message
             if (type == 'OFPT_PACKET_IN') {
-                const packet = decode.decodeethernet(obj.message.body.data, 0)
+                const packet = decode.decodeethernet(msg.message.body.data, 0)
                 console.dir(packet)
                 msg.message.decodedEthernet = packet
             }

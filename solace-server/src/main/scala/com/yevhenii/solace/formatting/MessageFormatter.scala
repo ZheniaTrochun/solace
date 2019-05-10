@@ -21,7 +21,7 @@ trait MessageFormatter {
     )
   }
 
-  def setOutFloodPacket(message: Message, inPort: String, dpid: String): MessageHolder = {
+  def setOutFloodPacket(message: Message, inPort: Int, dpid: String): MessageHolder = {
     MessageHolder(
       dpid = Some(dpid),
       message = Message(
@@ -44,7 +44,7 @@ trait MessageFormatter {
     )
   }
 
-  def setFlowModPacket(message: Message, packet: EthernetMessage, inPort: String, outPort: String, dpid: String): MessageHolder = {
+  def setFlowModPacket(message: Message, packet: EthernetMessage, inPort: Int, outPort: String, dpid: String): MessageHolder = {
     val flow = extractFlow(packet)
     MessageHolder(
       dpid = Some(dpid),

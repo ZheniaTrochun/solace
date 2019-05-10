@@ -5,7 +5,7 @@ object Matches {
 
   case class MatchBody(
                         wildcards: Int,
-                        in_port: String,
+                        in_port: Int,
                         dl_src: String,
                         dl_dst: String,
                         dl_type: String,

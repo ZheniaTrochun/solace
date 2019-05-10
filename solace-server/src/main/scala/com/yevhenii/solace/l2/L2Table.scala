@@ -9,7 +9,7 @@ import scala.concurrent.Future
 trait L2Table {
   def learn(msg: Message, ethernetMessage: EthernetMessage, dpid: String): Unit
 
-  def get(dpid: String): ConcurrentHashMap[String, String]
+  def get(dpid: String): ConcurrentHashMap[String, Int]
 }
 
 object L2Table {

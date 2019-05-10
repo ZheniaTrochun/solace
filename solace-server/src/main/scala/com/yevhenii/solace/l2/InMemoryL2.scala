@@ -11,7 +11,7 @@ class InMemoryL2 extends L2Table {
 
   val logger = Logger("InMemoryL2")
 
-  val table: ConcurrentHashMap[String, ConcurrentHashMap[String, String]] = new ConcurrentHashMap[String, ConcurrentHashMap[String, String]]()
+  val table: ConcurrentHashMap[String, ConcurrentHashMap[String, Int]] = new ConcurrentHashMap[String, ConcurrentHashMap[String, Int]]()
 
   def learn(msg: Message, ethernetMessage: EthernetMessage, dpid: String): Unit = {
     val dlSrc = ethernetMessage.shost
@@ -21,7 +21,7 @@ class InMemoryL2 extends L2Table {
     if (isBroadcast(dlSrc)) {
       logger.warn("Source set to broadcast!")
     } else {
-      table.computeIfAbsent(dpid, _ => new ConcurrentHashMap[String, String]())
+      table.computeIfAbsent(dpid, _ => new ConcurrentHashMap[String, Int]())
       val map = table.get(dpid)
       if (map.containsKey(dlSrc)) {
         val dst = map.get(dlSrc)
@@ -38,7 +38,7 @@ class InMemoryL2 extends L2Table {
     }
   }
 
-  def get(dpid: String): ConcurrentHashMap[String, String] = {
+  def get(dpid: String): ConcurrentHashMap[String, Int] = {
     table.get(dpid)
   }
 }
