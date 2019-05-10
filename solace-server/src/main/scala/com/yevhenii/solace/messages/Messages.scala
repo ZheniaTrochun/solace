@@ -11,7 +11,7 @@ object Messages {
   case class MessageBody(
                           buffer_id: Option[Int] = None,
                           actions: Option[List[Action]] = None,
-                          data: Option[Array[Byte]] = None,
+                          data: Option[MessageBodyData] = None,
                           in_port: Option[Int] = None,
                           command: Option[String] = None,
                           hard_timeout: Option[Int] = None,
@@ -24,6 +24,8 @@ object Messages {
                           reason: Option[String] = None,
                           table_id: Option[Int] = None,
                         )
+
+  case class MessageBodyData(`type`: String, data: Array[Byte])
 
   case class Icmp(`type`: String, code: String)
 
@@ -56,6 +58,7 @@ object Messages {
   import spray.json._
   import spray.json.DefaultJsonProtocol._
 
+  implicit val messageBodyDataFormat = jsonFormat2(MessageBodyData)
   implicit val headerFormat = jsonFormat2(Header)
   implicit val icmpFormat = jsonFormat2(Icmp)
   implicit val ipFormat = jsonFormat6(Ip)
