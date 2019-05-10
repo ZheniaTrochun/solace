@@ -2,6 +2,7 @@ package com.yevhenii.solace.formatting
 
 import akka.util.ByteString
 import com.softwaremill.sttp._
+import com.softwaremill.sttp.akkahttp.AkkaHttpBackend
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
 import com.yevhenii.solace.messages.Messages._
@@ -21,7 +22,7 @@ class Formatter(ec: ExecutionContext) {
   val unpackUri = uri"http://$host:$port/unpack"
   val packUri = uri"http://$host:$port/pack"
 
-  private implicit val backend = HttpURLConnectionBackend()
+  private implicit val backend = AkkaHttpBackend()
   private implicit val httpEC = ec
 
   @deprecated def pack(outMessage: MessageHolder): Future[String] = {
@@ -29,7 +30,7 @@ class Formatter(ec: ExecutionContext) {
       .body(outMessage.toJson.toString)
       .header("Content-Type", "application/json", replaceExisting = true)
 
-    val response = Future { request.send() }
+    val response = request.send()
 
     response.andThen {
       case Success(res) =>
@@ -46,10 +47,10 @@ class Formatter(ec: ExecutionContext) {
     import Formatter.packRequestFormat
 
     val request = sttp.post(packUri)
-      .body(PackRequest(outMessage, `type`).toJson.toString, "utf-8")
+      .body(PackRequest(outMessage, `type`).toJson.toString)
       .header("Content-Type", "application/json", replaceExisting = true)
 
-    val response = Future { request.send() }
+    val response = request.send()
 
     response.andThen {
       case Success(res) =>
@@ -71,16 +72,17 @@ class Formatter(ec: ExecutionContext) {
     logger.info(s"raw message: $rawMessage")
     val request = sttp.post(unpackUri).body(rawMessage).header("Content-Type", "application/json", replaceExisting = true)
 
-    val resultFuture = Future {
-      val resp = request.send()
-      logger.info(s"response code: ${resp.code}, response: [$resp]")
-      resp
-    }.map(resp => {
-      resp
-        .unsafeBody
-        .parseJson
-        .convertTo[List[MessageHolder]]
-    })
+    val resultFuture = request.send()
+      .map(resp => {
+        logger.info(s"response code: ${resp.code}, response: [$resp]")
+        resp
+      })
+      .map(resp => {
+        resp
+          .unsafeBody
+          .parseJson
+          .convertTo[List[MessageHolder]]
+      })
 
     resultFuture.andThen {
       case Success(parsed) =>
@@ -94,12 +96,8 @@ class Formatter(ec: ExecutionContext) {
 
   def unpackOne(data: String): Future[MessageHolder] = {
     val request = sttp.post(unpackUri).body(data)
-    Future {
-      request.send()
-        .unsafeBody
-        .parseJson
-        .convertTo[MessageHolder]
-    }
+    request.send()
+      .map(_.unsafeBody.parseJson.convertTo[MessageHolder])
   }
 }
 
