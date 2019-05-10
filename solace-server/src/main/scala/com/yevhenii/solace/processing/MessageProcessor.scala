@@ -1,6 +1,8 @@
 package com.yevhenii.solace.processing
 
+import akka.actor.ActorRef
 import com.typesafe.scalalogging.Logger
+import com.yevhenii.solace.SocketProcessor.SetDPID
 import com.yevhenii.solace.formatting.{Formatter, MessageFormatter}
 import com.yevhenii.solace.l2.L2Table
 import com.yevhenii.solace.messages.Messages.{EthernetMessage, Message, MessageHolder}
@@ -12,11 +14,9 @@ class MessageProcessor(
                       ) extends MessageFormatter {
   val logger = Logger("MessageProcessor")
 
-  var dpid = -1
-
   type Type = String
 
-  def processMessage(messageHolder: MessageHolder, sessionId: String): Either[String, List[ProcessingResult]] = {
+  def processMessage(messageHolder: MessageHolder, sessionId: String)(socket: ActorRef, dpid: String): Either[String, List[ProcessingResult]] = {
     logger.info(s"processing message ${messageHolder.message.header.`type`}")
 
     messageHolder.message.header.`type` match {
@@ -43,10 +43,10 @@ class MessageProcessor(
       case "OFPT_PACKET_IN" =>
         // TODO check this stuff IMMEDIATELY !!!
         logger.info("MESSAGE_IN here")
-        messageIn(messageHolder, sessionId).map(res => List(res))
+        messageIn(messageHolder, sessionId, dpid).map(res => List(res))
       case "OFPT_FEATURES_REPLY" =>
         // todo check
-        dpid = messageHolder.message.body.get.datapath_id.get
+        socket ! SetDPID(messageHolder.message.body.get.datapath_id.get)
         Right(List())
       case "OFPT_PORT_STATUS" =>
         Left("Not inmplemented yet")
@@ -57,7 +57,7 @@ class MessageProcessor(
     }
   }
 
-  def messageIn(messageHolder: MessageHolder, sessionId: String): Either[String, ProcessingResult] = {
+  def messageIn(messageHolder: MessageHolder, sessionId: String, dpid: String): Either[String, ProcessingResult] = {
     logger.info(s"started MESSAGE_IN (${messageHolder.message.decodedEthernet.get})")
     messageHolder.message.decodedEthernet
       .fold[Either[String, ProcessingResult]] {
@@ -66,7 +66,7 @@ class MessageProcessor(
       } { decoded =>
         logger.info("starting learning...")
 
-        try l2Table.learn(messageHolder.message, decoded, dpid.toString) // todo ugly
+        try l2Table.learn(messageHolder.message, decoded, dpid) // todo ugly
         catch {
           case e: Exception =>
             logger.error("GENERAL KENOBI")
@@ -75,7 +75,7 @@ class MessageProcessor(
 
         logger.info("table should be learnt now")
         Right(
-          createForwardPacket(messageHolder.message, decoded, messageHolder.dpid.get, sessionId)
+          createForwardPacket(messageHolder.message, decoded, dpid, sessionId)
         )
       }
   }

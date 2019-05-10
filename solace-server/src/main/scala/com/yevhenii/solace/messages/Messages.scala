@@ -23,7 +23,7 @@ object Messages {
                           total_len: Option[Int] = None,
                           reason: Option[String] = None,
                           table_id: Option[Int] = None,
-                          datapath_id: Option[Int] = None
+                          datapath_id: Option[String] = None
                         )
 
   case class MessageBodyData(`type`: String, data: Array[Byte])

@@ -55,6 +55,8 @@ class Manager(handlerClass: Class[_]) extends Actor with ActorLogging {
 object SocketProcessor {
   final case class Ack(offset: Int) extends Tcp.Event
 
+  final case class SetDPID(dpid: String)
+
   def props(connection: ActorRef, remote: InetSocketAddress,
             messageProcessor: MessageProcessor, senderManager: Sender,
             formatter: Formatter): Props =
@@ -75,6 +77,8 @@ class SocketProcessor(connection: ActorRef,
 
   val localAddress = new InetSocketAddress("0.0.0.0", 6633)
 
+  private var dpid = "0"
+
   // sign death pact: this actor terminates when connection breaks
   context.watch(connection)
 
@@ -83,7 +87,7 @@ class SocketProcessor(connection: ActorRef,
     case Received(data) =>
 //      connection ! Write(data, Connected(remote, localAddress))
       log.info(s"received raw data, size: ${data.size}")
-      formatter.unpack(data).flatMap(list => processDecoded(list, remote.toString))(context.dispatcher)
+      formatter.unpack(data).flatMap(list => processDecoded(list, remote.toString)(self))(context.dispatcher)
 
     case Ack(ack) =>
       log.warning("ack")
@@ -93,6 +97,9 @@ class SocketProcessor(connection: ActorRef,
 
     case PeerClosed =>
       log.warning("peer closed")
+
+    case SetDPID(id) =>
+      dpid = id
   }
 
   override def postStop(): Unit = {
@@ -128,10 +135,10 @@ class SocketProcessor(connection: ActorRef,
     }
   }
 
-  def processDecoded(decoded: List[MessageHolder], sessionId: String)(implicit ec: ExecutionContext): Future[Unit] = {
+  def processDecoded(decoded: List[MessageHolder], sessionId: String)(socket: ActorRef)(implicit ec: ExecutionContext): Future[Unit] = {
     val processed: List[Either[String, List[ProcessingResult]]] =
       decoded
-        .map(msg => messageProcessor.processMessage(msg, sessionId))
+        .map(msg => messageProcessor.processMessage(msg, sessionId)(socket, dpid))
 
     val errors =
       processed
@@ -151,7 +158,7 @@ class SocketProcessor(connection: ActorRef,
   }
 
   def processDecodedOne(decoded: MessageHolder, sessionId: String)(implicit ec: ExecutionContext): Future[Unit] = {
-    val processed: Either[String, List[ProcessingResult]] = messageProcessor.processMessage(decoded, sessionId)
+    val processed: Either[String, List[ProcessingResult]] = messageProcessor.processMessage(decoded, sessionId)(self, dpid)
 
     processed.fold(
       e => {
