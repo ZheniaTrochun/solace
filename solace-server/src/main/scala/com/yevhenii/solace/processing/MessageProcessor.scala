@@ -57,6 +57,7 @@ class MessageProcessor(
       } { decoded =>
         logger.info("starting learning...")
         l2Table.learn(messageHolder.message, decoded, messageHolder.dpid.get)
+        logger.info("table should be learnt now")
         Right(
           createForwardPacket(messageHolder.message, decoded, messageHolder.dpid.get, sessionId)
         )
