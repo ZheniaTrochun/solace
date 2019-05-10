@@ -18,12 +18,16 @@ class InMemoryL2 extends L2Table {
     val dlDst = ethernetMessage.dhost
     val inPort = msg.body.get.in_port.get
 
+    logger.info("learning in-memory L2 table")
+
     if (isBroadcast(dlSrc)) {
       logger.warn("Source set to broadcast!")
     } else {
+      logger.info("NOT broadcast")
       table.computeIfAbsent(dpid, _ => new ConcurrentHashMap[String, Int]())
       val map = table.get(dpid)
       if (map.containsKey(dlSrc)) {
+        logger.info("L2 CONTAINS key")
         val dst = map.get(dlSrc)
         if (dst != inPort) {
           logger.info(s"MAC has moved from $dst to $inPort")

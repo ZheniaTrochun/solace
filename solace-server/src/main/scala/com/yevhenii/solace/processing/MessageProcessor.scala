@@ -33,6 +33,8 @@ class MessageProcessor(
           msgType
         ))
       case "OFPT_PACKET_IN" =>
+        // TODO check this stuff IMMEDIATELY !!!
+        logger.info("MESSAGE_IN here")
         messageIn(messageHolder, sessionId)
       case "OFPT_FEATURES_REPLY" =>
 //        TODO set dpid
@@ -47,11 +49,13 @@ class MessageProcessor(
   }
 
   def messageIn(messageHolder: MessageHolder, sessionId: String): Either[String, ProcessingResult] = {
+    logger.info(s"started MESSAGE_IN (${messageHolder.message.decodedEthernet.get})")
     messageHolder.message.decodedEthernet
       .fold[Either[String, ProcessingResult]] {
         logger.error("Ethernet message not present!")
         Left("Ethernet message not present!")
       } { decoded =>
+        logger.info("starting learning...")
         l2Table.learn(messageHolder.message, decoded, messageHolder.dpid.get)
         Right(
           createForwardPacket(messageHolder.message, decoded, messageHolder.dpid.get, sessionId)
