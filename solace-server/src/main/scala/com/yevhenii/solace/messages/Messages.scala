@@ -46,7 +46,7 @@ object Messages {
                     )
 
   case class EthernetMessage(
-                              body: String = "",
+                              body: Option[String] = None,
                               shost: String,
                               dhost: String,
                               ethertype: Int,
