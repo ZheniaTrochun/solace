@@ -60,7 +60,8 @@ trait MessageFormatter {
           idle_timeout = Some(100),
           priority = Some(0x8000),
           buffer_id = message.body.get.buffer_id,
-          out_port = Some("OFPP_NONE"),
+//          out_port = Some("OFPP_NONE"), // todo i don't understand
+          out_port = Some(outPort),
           flags = Some(List("OFPFF_SEND_FLOW_REM")),
           `match` = Some(Match(
             header = MatchHeader("OFPMT_STANDARD"),
