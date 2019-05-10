@@ -20,6 +20,10 @@ module.exports = {
 		console.log(`buffer size = ${bufsize}`)
 		const buf = new Buffer(bufsize)
 //		const buf = new Buffer(1024) // todo
+        // todo
+        if ((type === 'OFPT_ECHO_REPLY') && (!obj.body)) {
+            obj.body = {}
+        }
 
 		const pack = oflib.pack(obj, buf, 0)
 
