@@ -16,21 +16,22 @@ module.exports = {
 	packMessage: (type, obj) => {
 		console.dir(type)
 		console.dir(obj)
-		const typelower = type.toLowerCase().replace("ofpt_", "ofp_")
+		const typelower = type.toLowerCase()
 		const bufsize = h_sizes[typelower] // todo
+		console.log(`buffer size = ${bufsize}`)
 		const buf = new Buffer(bufsize)
 //		const buf = new Buffer(1024) // todo
 
 		const pack = oflib.pack(obj, buf, 0)
 
 		console.dir(pack)
-		if (!('error' in pack)) {
+		if (!('error' in pack) && pack.hasOwnProperty('offset')) {
 		    console.log("packed successfully, pack result:")
 			console.dir(pack)
 			console.log("packed successfully, buffer:")
 			console.dir(buf)
 
-			return buf
+			return buf.slice(0, pack.offset)
 		} else {
 			util.log("_sendPacket Error packing object " + util.inspect(pack))
 		}
