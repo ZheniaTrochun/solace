@@ -1,10 +1,9 @@
-var util = require('util')
-var oflib = require('oflib-node')
-var decode = require('./decoder.js')
-
-var switchStream = new oflib.Stream();
+const util = require('util')
+const oflib = require('oflib-node')
+const decode = require('./decoder.js')
 
 function unpackData(data) {
+    const switchStream = new oflib.Stream();
     console.dir(data)
     const msgs = switchStream.process(Buffer.from(data, 'utf-8'))
     msgs.forEach(msg => {
@@ -23,13 +22,21 @@ function unpackData(data) {
             console.dir(data)
         }
     })
+
     console.dir(msgs)
+
     if ((msgs.length == 1) && (msgs[0].hasOwnProperty('error'))) {
         if (msgs[0].error.desc.includes('OFPT_HELLO message at offset 0 has invalid length (') && (data.length > 8)) {
             console.log("trying to drop not needed data and retry")
-            return unpackData(data.slice(0, 8))
+            const formatted = data.slice(0, 8)
+            console.log("formatted: ")
+            formatted[3] = 8
+            console.dir(formatted)
+
+            return unpackData(formatted)
         }
     }
+
     return msgs
 }
 
