@@ -46,7 +46,7 @@ class Formatter(ec: ExecutionContext) {
     import Formatter.packRequestFormat
 
     val request = sttp.post(packUri)
-      .body(PackRequest(outMessage, `type`).toJson.toString)
+      .body(PackRequest(outMessage, `type`).toJson.toString, "utf-8")
       .header("Content-Type", "application/json", replaceExisting = true)
 
     val response = Future { request.send() }
