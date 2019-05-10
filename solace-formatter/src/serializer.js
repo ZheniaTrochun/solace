@@ -15,7 +15,11 @@ module.exports = {
 
 		console.dir(pack)
 		if (!('error' in pack)) {
-			return pack
+		    console.log("packed successfully, pack result:")
+			console.dir(pack)
+			console.log("packed successfully, buffer:")
+			console.dir(buf)
+			return buf
 		} else {
 			util.log("_sendPacket Error packing object " + util.inspect(pack))
 		}
