@@ -92,7 +92,7 @@ class MessageProcessor(
          logger.warn(s"Learned port $inPort, system = solace")
          ProcessingResult(
            setOutFloodPacket(message, inPort, dpid),
-           "OFTP_PACKET_OUT"
+           "OFPT_PACKET_OUT"
          )
        } else {
          val outPort = port.toString // TODO
