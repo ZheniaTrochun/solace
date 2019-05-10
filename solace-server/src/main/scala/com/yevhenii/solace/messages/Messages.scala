@@ -10,7 +10,7 @@ object Messages {
 
   case class MessageBody(
                           buffer_id: Option[Int] = None,
-                          actions: List[Action],
+                          actions: Option[List[Action]] = None,
                           data: Option[Array[Byte]] = None,
                           in_port: Option[Int] = None,
                           command: Option[String] = None,
@@ -44,10 +44,10 @@ object Messages {
                     )
 
   case class EthernetMessage(
-                              body: String,
+                              body: String = "",
                               shost: String,
                               dhost: String,
-                              ethertype: String,
+                              ethertype: Int,
                               vlan: Option[Int] = None,
                               priority: Option[Int] = None,
                               ip: Option[Ip] = None,

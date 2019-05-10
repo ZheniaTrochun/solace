@@ -8,7 +8,7 @@ object Matches {
                         in_port: Int,
                         dl_src: String,
                         dl_dst: String,
-                        dl_type: String,
+                        dl_type: Int,
                         dl_vlan: Int,
                         dl_vlan_pcp: Int,
                         nw_src: String,

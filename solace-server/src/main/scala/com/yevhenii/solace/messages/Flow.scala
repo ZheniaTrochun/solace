@@ -3,7 +3,7 @@ package com.yevhenii.solace.messages
 case class Flow(
                  dlSrc: String,
                  dlDst: String,
-                 dlType: String,
+                 dlType: Int,
                  dlVlan: Int,
                  dlVlanPcp: Int,
                  nwSrc: String,

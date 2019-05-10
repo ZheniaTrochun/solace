@@ -32,12 +32,12 @@ trait MessageFormatter {
         body = Some(MessageBody(
           buffer_id = message.body.get.buffer_id,
           in_port = Some(inPort),
-          actions = List(
+          actions = Some(List(
             Action(
               ActionHeader(`type` = "OFPAT_OUTPUT"),
               ActionBody(port = "OFPP_FLOOD")
             )
-          )
+          ))
         )),
         version = "1.1"
       )
@@ -79,12 +79,12 @@ trait MessageFormatter {
               tp_dst = flow.tpDst
             )
           )),
-          actions = List(
+          actions = Some(List(
             Action(
               ActionHeader("OFPAT_OUTPUT"),
               ActionBody(outPort)
             )
-          ),
+          )),
           in_port = None
         ))
       )
