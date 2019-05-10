@@ -26,7 +26,7 @@ trait MessageFormatter {
       dpid = Some(dpid), // todo think
       message = Message(
         header = Header(
-          `type` = "OFTP_PACKET_OUT",
+          `type` = "OFPT_PACKET_OUT",
           xid = message.header.xid
         ),
         body = Some(MessageBody(
