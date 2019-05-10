@@ -1,5 +1,5 @@
 const util = require('util')
-const oflib = require('oflib-node');
+const oflib = require('oflib-node/lib/oflib.js');
 const ofpp = require('oflib-node/lib/ofp-1.1/ofp.js')
 
 module.exports = {
