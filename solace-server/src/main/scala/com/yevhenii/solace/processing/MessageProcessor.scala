@@ -56,7 +56,14 @@ class MessageProcessor(
         Left("Ethernet message not present!")
       } { decoded =>
         logger.info("starting learning...")
-        l2Table.learn(messageHolder.message, decoded, messageHolder.dpid.get)
+
+        try l2Table.learn(messageHolder.message, decoded, messageHolder.dpid.get)
+        catch {
+          case e: Exception =>
+            logger.error("GENERAL KENOBI")
+            logger.error("Table was not learnt", e)
+        }
+
         logger.info("table should be learnt now")
         Right(
           createForwardPacket(messageHolder.message, decoded, messageHolder.dpid.get, sessionId)

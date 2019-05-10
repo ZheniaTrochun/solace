@@ -14,6 +14,7 @@ class InMemoryL2 extends L2Table {
   val table: ConcurrentHashMap[String, ConcurrentHashMap[String, Int]] = new ConcurrentHashMap[String, ConcurrentHashMap[String, Int]]()
 
   def learn(msg: Message, ethernetMessage: EthernetMessage, dpid: String): Unit = {
+    logger.info("HELLO THERE")
     val dlSrc = ethernetMessage.shost
     val dlDst = ethernetMessage.dhost
     val inPort = msg.body.get.in_port.get
