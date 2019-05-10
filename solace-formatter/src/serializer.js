@@ -21,7 +21,7 @@ module.exports = {
 		const buf = new Buffer(bufsize)
 //		const buf = new Buffer(1024) // todo
         // todo
-        if ((type === 'OFPT_ECHO_REPLY') && (!obj.body)) {
+        if ((type === 'OFPT_ECHO_REPLY' || type === 'OFPT_ECHO_REQUEST') && (!obj.body)) {
             console.log('formatting OFPT_ECHO_REPLY...')
             obj.body = {}
         }
