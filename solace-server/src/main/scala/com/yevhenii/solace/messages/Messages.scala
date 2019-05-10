@@ -23,6 +23,7 @@ object Messages {
                           total_len: Option[Int] = None,
                           reason: Option[String] = None,
                           table_id: Option[Int] = None,
+                          datapath_id: Option[Int] = None
                         )
 
   case class MessageBodyData(`type`: String, data: Array[Byte])
@@ -62,7 +63,7 @@ object Messages {
   implicit val headerFormat = jsonFormat2(Header)
   implicit val icmpFormat = jsonFormat2(Icmp)
   implicit val ipFormat = jsonFormat6(Ip)
-  implicit val messageBodyFormat = jsonFormat14(MessageBody)
+  implicit val messageBodyFormat = jsonFormat15(MessageBody)
   implicit val ethernetMessageFormat = jsonFormat7(EthernetMessage)
   implicit val messageFormat = jsonFormat4(Message)
   implicit val messageHolderFormat = jsonFormat2(MessageHolder)

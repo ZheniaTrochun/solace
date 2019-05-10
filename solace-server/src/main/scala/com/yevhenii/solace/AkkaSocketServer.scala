@@ -129,7 +129,7 @@ class SocketProcessor(connection: ActorRef,
   }
 
   def processDecoded(decoded: List[MessageHolder], sessionId: String)(implicit ec: ExecutionContext): Future[Unit] = {
-    val processed: List[Either[String, ProcessingResult]] =
+    val processed: List[Either[String, List[ProcessingResult]]] =
       decoded
         .map(msg => messageProcessor.processMessage(msg, sessionId))
 
@@ -140,7 +140,7 @@ class SocketProcessor(connection: ActorRef,
 
     val successes = processed
       .filter(_.isRight)
-      .map(_.right.get)
+      .flatMap(_.right.get)
 
     errors.foreach(e => log.warning(s"error during processing input for $sessionId, error: $e, decoded: ${decoded.mkString("")}"))
     successes.foreach(res => log.info(s"Successful processed: [$res]"))
@@ -151,14 +151,17 @@ class SocketProcessor(connection: ActorRef,
   }
 
   def processDecodedOne(decoded: MessageHolder, sessionId: String)(implicit ec: ExecutionContext): Future[Unit] = {
-    val processed: Either[String, ProcessingResult] = messageProcessor.processMessage(decoded, sessionId)
+    val processed: Either[String, List[ProcessingResult]] = messageProcessor.processMessage(decoded, sessionId)
 
     processed.fold(
       e => {
         log.warning(s"error during processing input for $sessionId, error: $e, decoded: $decoded")
         Future.failed(new IllegalArgumentException(s"error during processing input for $sessionId, error: $e, decoded: $decoded"))
       },
-      res => senderManager.sendPacket(res.outMessage, sessionId, res.msgType)(connection)
+      res =>
+        Future.traverse(res) {
+          msg => senderManager.sendPacket(msg.outMessage, sessionId, msg.msgType)(connection)
+        }.map(_ => ())
     )
   }
 }

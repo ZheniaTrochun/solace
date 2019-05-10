@@ -12,33 +12,42 @@ class MessageProcessor(
                       ) extends MessageFormatter {
   val logger = Logger("MessageProcessor")
 
+  var dpid = -1
+
   type Type = String
 
-  def processMessage(messageHolder: MessageHolder, sessionId: String): Either[String, ProcessingResult] = {
+  def processMessage(messageHolder: MessageHolder, sessionId: String): Either[String, List[ProcessingResult]] = {
     logger.info(s"processing message ${messageHolder.message.header.`type`}")
 
     messageHolder.message.header.`type` match {
       case msgType @ "OFPT_HELLO" =>
-        Right(ProcessingResult(
-          setSyncMessage("OFPT_HELLO", messageHolder, messageHolder.dpid),
-          msgType
+        Right(List(
+          ProcessingResult(
+            setSyncMessage("OFPT_HELLO", messageHolder, messageHolder.dpid),
+            msgType
+          ),
+          ProcessingResult(
+            setSyncMessage("OFPT_FEATURES_REQUEST", messageHolder, messageHolder.dpid),
+            "OFPT_FEATURES_REQUEST"
+          )
         ))
 //        sender.sendPacket(setSyncMessage("OFPT_FEATURES_REQUEST", messageHolder, messageHolder.dpid), sessionId, t) // TODO
       case "OFPT_ERROR" =>
       //        TODO log error
         Left("Not inmplemented yet")
       case msgType @ "OFPT_ECHO_REQUEST" =>
-        Right(ProcessingResult(
+        Right(List(ProcessingResult(
           setSyncMessage("OFPT_ECHO_REPLY", messageHolder, messageHolder.dpid),
           msgType
-        ))
+        )))
       case "OFPT_PACKET_IN" =>
         // TODO check this stuff IMMEDIATELY !!!
         logger.info("MESSAGE_IN here")
-        messageIn(messageHolder, sessionId)
+        messageIn(messageHolder, sessionId).map(res => List(res))
       case "OFPT_FEATURES_REPLY" =>
-//        TODO set dpid
-        Left("Not inmplemented yet")
+        // todo check
+        dpid = messageHolder.message.body.get.datapath_id.get
+        Right(List())
       case "OFPT_PORT_STATUS" =>
         Left("Not inmplemented yet")
       case "OFPT_FLOW_REMOVED" =>
@@ -57,7 +66,7 @@ class MessageProcessor(
       } { decoded =>
         logger.info("starting learning...")
 
-        try l2Table.learn(messageHolder.message, decoded, messageHolder.dpid.get)
+        try l2Table.learn(messageHolder.message, decoded, dpid.toString) // todo ugly
         catch {
           case e: Exception =>
             logger.error("GENERAL KENOBI")

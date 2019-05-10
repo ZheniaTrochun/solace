@@ -9,7 +9,7 @@ trait MessageFormatter {
 
   def setSyncMessage(name: String, msg: MessageHolder, dpid: Option[String]): MessageHolder = {
     MessageHolder(
-      dpid = dpid,
+      dpid = dpid, // todo think
       message = Message(
         header = Header(
           `type` = name,
@@ -23,7 +23,7 @@ trait MessageFormatter {
 
   def setOutFloodPacket(message: Message, inPort: Int, dpid: String): MessageHolder = {
     MessageHolder(
-      dpid = Some(dpid),
+      dpid = Some(dpid), // todo think
       message = Message(
         header = Header(
           `type` = "OFTP_PACKET_OUT",
@@ -47,7 +47,7 @@ trait MessageFormatter {
   def setFlowModPacket(message: Message, packet: EthernetMessage, inPort: Int, outPort: String, dpid: String): MessageHolder = {
     val flow = extractFlow(packet)
     MessageHolder(
-      dpid = Some(dpid),
+      dpid = Some(dpid), // todo think
       message = Message(
         version = "1.1",
         header = Header(
