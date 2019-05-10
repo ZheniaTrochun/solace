@@ -20,7 +20,7 @@ object Messages {
                           out_port: Option[String] = None,
                           flags: Option[List[String]] = None,
                           `match`: Option[Match] = None,
-                          total_len: Int = 0,
+                          total_len: Option[Int] = None,
                           reason: Option[String] = None,
                           table_id: Option[Int] = None,
                         )
