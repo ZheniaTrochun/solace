@@ -18,13 +18,16 @@ module.exports = {
 		const typelower = type.toLowerCase()
 		const bufsize = h_sizes[typelower] // todo
 		console.log(`buffer size = ${bufsize}`)
-		const buf = new Buffer(bufsize)
-//		const buf = new Buffer(1024) // todo
+//		const buf = new Buffer(bufsize)
+		const buf = new Buffer(1024) // todo
         // todo
         if ((type === 'OFPT_ECHO_REPLY' || type === 'OFPT_ECHO_REQUEST') && (!obj.body)) {
             console.log('formatting OFPT_ECHO_REPLY...')
             obj.body = {}
         }
+		if (type === 'OFPT_PACKET_OUT') {
+			obj.body.data = Buffer.from(obj.body.data.data)
+		}
 
 		const pack = oflib.pack(obj, buf, 0)
 
