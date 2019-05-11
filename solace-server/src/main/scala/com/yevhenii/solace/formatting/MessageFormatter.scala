@@ -21,30 +21,30 @@ trait MessageFormatter {
     )
   }
 
-  def setOutFloodPacket(message: Message, inPort: Int, dpid: String): MessageHolder = {
-    MessageHolder(
-      dpid = Some(dpid), // todo think
-      message = Message(
-        header = Header(
-          `type` = "OFPT_PACKET_OUT",
-          xid = message.header.xid
-        ),
-        body = Some(MessageBody(
-          buffer_id = message.body.get.buffer_id,
-          in_port = Some(inPort),
-          actions = Some(List(
-            Action(
-              ActionHeader(`type` = "OFPAT_OUTPUT"),
-              ActionBody(port = "OFPP_FLOOD")
-            )
-          ))
+  def setOutFloodPacket(message: Message, inPort: Int, dpid: String): MessageHolder = MessageHolder(
+    dpid = Some(dpid), // todo think
+    message = Message(
+      header = Header(
+        `type` = "OFPT_PACKET_OUT",
+        xid = message.header.xid
+      ),
+      body = Some(MessageBody(
+        buffer_id = message.body.get.buffer_id,
+        in_port = Some(inPort),
+        data = message.body.get.data, // todo doesn't work BUT without this it doesn't work too !!!!!!!!!!!
+        actions = Some(List(
+          Action(
+            ActionHeader(`type` = "OFPAT_OUTPUT"),
+            ActionBody(port = 0xfffb, 0)
+          )
         )),
-        version = "1.1"
-      )
+        actions_len = Some(8)
+      )),
+      version = "1.1"
     )
-  }
+  )
 
-  def setFlowModPacket(message: Message, packet: EthernetMessage, inPort: Int, outPort: String, dpid: String): MessageHolder = {
+  def setFlowModPacket(message: Message, packet: EthernetMessage, inPort: Int, outPort: Int, dpid: String): MessageHolder = {
     val flow = extractFlow(packet)
     MessageHolder(
       dpid = Some(dpid), // todo think
@@ -61,7 +61,9 @@ trait MessageFormatter {
           priority = Some(0x8000),
           buffer_id = message.body.get.buffer_id,
 //          out_port = Some("OFPP_NONE"), // todo i don't understand
-          out_port = Some(outPort),
+//          out_port = Some(outPort),
+//          out_port = Some("OFPP_ANY"),
+          out_port = Some(0xffff),
           flags = Some(List("OFPFF_SEND_FLOW_REM")),
           `match` = Some(Match(
             header = MatchHeader("OFPMT_STANDARD"),
@@ -83,9 +85,10 @@ trait MessageFormatter {
           actions = Some(List(
             Action(
               ActionHeader("OFPAT_OUTPUT"),
-              ActionBody(outPort)
+              ActionBody(outPort, 0)
             )
           )),
+          actions_len = Some(8),
           in_port = None
         ))
       )

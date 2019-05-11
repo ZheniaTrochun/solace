@@ -95,7 +95,7 @@ class MessageProcessor(
            "OFPT_PACKET_OUT"
          )
        } else {
-         val outPort = port.toString // TODO
+         val outPort = port
          logger.info(s"Installing flow for destination: $dlDst, source: $dlSrc, in_port: $inPort, out_port: $outPort, system = Solace")
          ProcessingResult(
            setFlowModPacket(message, packet, inPort, outPort, dpid),

@@ -17,13 +17,14 @@ object Messages {
                           hard_timeout: Option[Int] = None,
                           idle_timeout: Option[Int] = None,
                           priority: Option[Int] = None,
-                          out_port: Option[String] = None,
+                          out_port: Option[Int] = None,
                           flags: Option[List[String]] = None,
                           `match`: Option[Match] = None,
                           total_len: Option[Int] = None,
                           reason: Option[String] = None,
                           table_id: Option[Int] = None,
-                          datapath_id: Option[String] = None
+                          datapath_id: Option[String] = None,
+                          actions_len: Option[Int] = None
                         )
 
   case class MessageBodyData(`type`: String, data: Array[Byte])
@@ -63,7 +64,7 @@ object Messages {
   implicit val headerFormat = jsonFormat2(Header)
   implicit val icmpFormat = jsonFormat2(Icmp)
   implicit val ipFormat = jsonFormat6(Ip)
-  implicit val messageBodyFormat = jsonFormat15(MessageBody)
+  implicit val messageBodyFormat = jsonFormat16(MessageBody)
   implicit val ethernetMessageFormat = jsonFormat7(EthernetMessage)
   implicit val messageFormat = jsonFormat4(Message)
   implicit val messageHolderFormat = jsonFormat2(MessageHolder)
