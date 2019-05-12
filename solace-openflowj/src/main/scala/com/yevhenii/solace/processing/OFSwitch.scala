@@ -1,5 +1,7 @@
 package com.yevhenii.solace.processing
 
+import java.nio.ByteBuffer
+
 import akka.actor.{Actor, ActorLogging}
 import com.yevhenii.solace.table.InMemoryMacTable
 import org.projectfloodlight.openflow.protocol._
@@ -7,8 +9,11 @@ import org.projectfloodlight.openflow.protocol.action.OFAction
 import org.projectfloodlight.openflow.types.{MacAddress, OFBufferId, OFPort, U16, U64}
 import java.util
 
-import com.yevhenii.solace.protocol.OFMatch
-import com.yevhenii.solace.sockets.SocketProcessor.WriteMessage
+import akka.io.Tcp.Write
+import akka.util.ByteString
+import com.yevhenii.solace.protocol.{OFActionOld, OFActionOutput, OFMatch, OFFlowMod => OFFlowModOld}
+import com.yevhenii.solace.sockets.SocketProcessor.{DefaultBufferSize, WriteMessage, WriteRawMessage}
+import io.netty.buffer.Unpooled
 import org.projectfloodlight.openflow.protocol.`match`.{Match, MatchField}
 
 class OFSwitch(factory: OFFactory) extends Actor with ActorLogging {
@@ -57,30 +62,58 @@ class OFSwitch(factory: OFFactory) extends Actor with ActorLogging {
   }
 
   def flowAdd(bufferId: OFBufferId, inMatch: OFMatch, outPort: Short, inPort: Short): Unit = {
-    val fm = factory.buildFlowAdd()
-    fm.setBufferId(bufferId)
-    fm.setCookie(U64.ZERO)
+    // todo
+    val fm = new OFFlowModOld()
+    fm.setBufferId(bufferId.getInt)
+    fm.setCommand(0.toShort)
+    fm.setCookie(0L)
+    fm.setFlags(0.toShort)
     fm.setHardTimeout(0.toShort)
     fm.setIdleTimeout(5.toShort)
 
-    val newMatch = factory.buildMatch()
-      .setExact(MatchField.ETH_DST, MacAddress.of(inMatch.getDataLayerDestination))
-      .setExact(MatchField.ETH_SRC, MacAddress.of(inMatch.getDataLayerSource))
-      .setExact(MatchField.IN_PORT, OFPort.ofShort(inPort))
-      .build()
+    inMatch.setInputPort(inPort)
+    inMatch.setWildcards(0)
+    fm.setMatch(inMatch)
 
-    fm.setMatch(newMatch)
     fm.setOutPort(OFPort.ANY)
     fm.setPriority(0.toShort)
-    val action = factory.actions().buildOutput()
-      .setMaxLen(0)
-      .setPort(OFPort.ofShort(outPort))
-      .build()
-    val actions = new util.ArrayList[OFAction]
-    actions.add(action)
-    fm.setActions(actions)
 
-    sender() ! WriteMessage(fm.build())
+    val output = new OFActionOutput()
+    output.setMaxLength(0.toShort)
+    output.setPort(outPort)
+    val actions = new util.ArrayList[OFActionOld]()
+    actions.add(output)
+    fm.setActions(actions)
+    fm.setLength(U16.t(OFFlowModOld.MINIMUM_LENGTH + OFActionOutput.MINIMUM_LENGTH))
+
+//    val fm = factory.buildFlowAdd()
+//    fm.setBufferId(bufferId)
+//    fm.setCookie(U64.ZERO)
+//    fm.setHardTimeout(0.toShort)
+//    fm.setIdleTimeout(5.toShort)
+//
+//    val newMatch = factory.buildMatch()
+//      .setExact(MatchField.ETH_DST, MacAddress.of(inMatch.getDataLayerDestination))
+//      .setExact(MatchField.ETH_SRC, MacAddress.of(inMatch.getDataLayerSource))
+//      .setExact(MatchField.IN_PORT, OFPort.ofShort(inPort))
+//      .build()
+//
+//    fm.setMatch(newMatch)
+//    fm.setOutPort(OFPort.ANY)
+//    fm.setPriority(0.toShort)
+//    val action = factory.actions().buildOutput()
+//      .setMaxLen(0)
+//      .setPort(OFPort.ofShort(outPort))
+//      .build()
+//    val actions = new util.ArrayList[OFAction]
+//    actions.add(action)
+//    fm.setActions(actions)
+
+//    val buffer = Unpooled.buffer(0, DefaultBufferSize)
+    val buffer = ByteBuffer.allocate(DefaultBufferSize)
+    fm.writeTo(buffer)
+    val bytes = ByteString(buffer)
+    sender() ! WriteRawMessage(bytes)
   }
 
   def packetOut(bufferId: OFBufferId, pi: OFPacketIn, outPortOpt: Option[Short]): Unit = {

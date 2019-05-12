@@ -50,6 +50,9 @@ class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
     case WriteMessage(msg) =>
       write(msg)
 
+    case WriteRawMessage(msg) =>
+      write(msg)
+
     case PeerClosed =>
       log.warning("peer closed")
   }
@@ -90,10 +93,16 @@ class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
     val nioBuffer = buffer.nioBuffer()
     connection ! Write(ByteString(nioBuffer))
   }
+
+  def write(message: ByteString): Unit = {
+    log.info(s"Writing to socket raw message")
+    connection ! Write(message)
+  }
 }
 
 object SocketProcessor {
   val DefaultBufferSize: Int = 65536
 
   case class WriteMessage(message: OFMessage)
+  case class WriteRawMessage(bytes: ByteString)
 }
