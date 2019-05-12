@@ -4,9 +4,10 @@ import akka.actor.{Actor, ActorLogging}
 import com.yevhenii.solace.table.InMemoryMacTable
 import org.projectfloodlight.openflow.protocol._
 import org.projectfloodlight.openflow.protocol.action.OFAction
-import org.projectfloodlight.openflow.types.{OFBufferId, OFPort, U16, U64}
+import org.projectfloodlight.openflow.types.{MacAddress, OFBufferId, OFPort, U16, U64}
 import java.util
 
+import com.yevhenii.solace.protocol.OFMatch
 import com.yevhenii.solace.sockets.SocketProcessor.WriteMessage
 import org.projectfloodlight.openflow.protocol.`match`.{Match, MatchField}
 
@@ -24,10 +25,18 @@ class OFSwitch(factory: OFFactory) extends Actor with ActorLogging {
   }
 
   def processPacketIn(pi: OFPacketIn): Unit = {
-    val inMatch = pi.getMatch
-    val dlDst = inMatch.get(MatchField.ETH_DST).getBytes
+//    val inMatch = pi.getMatch
+//    val dlDst = inMatch.get(MatchField.ETH_DST).getBytes
+//    val dlDstKey = util.Arrays.hashCode(dlDst)
+//    val dlSrc = inMatch.get(MatchField.ETH_SRC).getBytes
+//    val dlSrcKey = util.Arrays.hashCode(dlSrc)
+//    val bufferId = pi.getBufferId
+//
+    val inMatch = new OFMatch()
+    inMatch.loadFromPacket(pi.getData, pi.getInPort.getShortPortNumber)
+    val dlDst = inMatch.getDataLayerDestination
     val dlDstKey = util.Arrays.hashCode(dlDst)
-    val dlSrc = inMatch.get(MatchField.ETH_SRC).getBytes
+    val dlSrc = inMatch.getDataLayerSource
     val dlSrcKey = util.Arrays.hashCode(dlSrc)
     val bufferId = pi.getBufferId
 
@@ -39,7 +48,7 @@ class OFSwitch(factory: OFFactory) extends Actor with ActorLogging {
       else None
 
     // push a flow mod if we know where the packet should be going
-    outPort.foreach(p => flowAdd(bufferId, inMatch, p))
+    outPort.foreach(p => flowAdd(bufferId, inMatch, p, pi.getInPort.getShortPortNumber))
 
     // Send a packet out
     if (outPort.isEmpty || (pi.getBufferId.getInt == 0xffffffff)) {
@@ -47,14 +56,21 @@ class OFSwitch(factory: OFFactory) extends Actor with ActorLogging {
     }
   }
 
-  def flowAdd(bufferId: OFBufferId, inMatch: Match, outPort: Short): Unit = {
+  def flowAdd(bufferId: OFBufferId, inMatch: OFMatch, outPort: Short, inPort: Short): Unit = {
     val fm = factory.buildFlowAdd()
     fm.setBufferId(bufferId)
     fm.setCookie(U64.ZERO)
     fm.setHardTimeout(0.toShort)
     fm.setIdleTimeout(5.toShort)
-    fm.setMatch(inMatch)
-    fm.setOutPort(OFPort.NORMAL)
+
+    val newMatch = factory.buildMatch()
+      .setExact(MatchField.ETH_DST, MacAddress.of(inMatch.getDataLayerDestination))
+      .setExact(MatchField.ETH_SRC, MacAddress.of(inMatch.getDataLayerSource))
+      .setExact(MatchField.IN_PORT, OFPort.ofShort(inPort))
+      .build()
+
+    fm.setMatch(newMatch)
+    fm.setOutPort(OFPort.ANY)
     fm.setPriority(0.toShort)
     val action = factory.actions().buildOutput()
       .setMaxLen(0)

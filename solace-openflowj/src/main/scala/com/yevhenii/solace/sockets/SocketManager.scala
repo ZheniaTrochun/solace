@@ -32,7 +32,7 @@ class SocketManager(host: String, port: Int) extends Actor with ActorLogging {
     case Connected(remote, local) =>
       log.info("received connection from {}", remote)
       val handler = context.actorOf(Props(classOf[SocketProcessor], sender(), remote))
-      sender() ! Register(handler, keepOpenOnPeerClosed = false)
+      sender() ! Register(handler, keepOpenOnPeerClosed = true)
   }
 
 }

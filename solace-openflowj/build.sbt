@@ -4,6 +4,13 @@ version := "0.1"
 
 scalaVersion := "2.12.8"
 
+// https://bitbucket.org/openflowj/openflowj.git
+
+lazy val root = (project in file(".")).dependsOn(openflowj)
+
+lazy val openflowj = RootProject(uri("https://bitbucket.org/openflowj/openflowj.git"))
+
+
 libraryDependencies += "com.typesafe" % "config" % "1.3.4"
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3"
 libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"

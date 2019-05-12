@@ -24,8 +24,15 @@ class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
   private var transferred = 0
 
   private val config = ConfigFactory.load()
-  private val factory = OFFactories.getFactory(OFVersion.valueOf(config.getString("solace.protocol")))
-  private val switch = context.actorOf(Props(classOf[OFSwitch]))
+  private val version = config.getInt("solace.protocol")
+
+  private val factory = OFFactories.getFactory(
+    OFVersion.values()
+      .find(v => v.wireVersion == version)
+      .get
+  )
+
+  private val switch = context.actorOf(Props(classOf[OFSwitch], factory))
 
   // sign death pact: this actor terminates when connection breaks
   context.watch(connection)
@@ -57,10 +64,12 @@ class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
     val message = factory.getReader.readFrom(Unpooled.copiedBuffer(data.toByteBuffer))
     message.getType match {
       case OFType.PACKET_IN =>
+        log.info(s"Got PACKET_IN from $remote")
         switch ! PacketIn(message.asInstanceOf[OFPacketIn])
       case OFType.HELLO =>
         log.info(s"Got HELLO from $remote")
       case OFType.ECHO_REQUEST =>
+        log.info(s"Got ECHO_REQUEST from $remote")
         val reply = factory.buildEchoReply().setXid(message.getXid).build()
         write(reply)
       case t =>
@@ -75,10 +84,10 @@ class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
   }
 
   def write(message: OFMessage): Unit = {
+    log.info(s"Writing to socket message ${message.getType}")
     val buffer = Unpooled.buffer(0, DefaultBufferSize)
     message.writeTo(buffer)
     val nioBuffer = buffer.nioBuffer()
-    nioBuffer.flip()
     connection ! Write(ByteString(nioBuffer))
   }
 }
