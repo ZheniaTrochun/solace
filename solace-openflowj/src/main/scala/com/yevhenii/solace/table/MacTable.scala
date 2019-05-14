@@ -7,5 +7,5 @@ trait MacTable[K, V, F[_]] {
 
   def get(key: K): F[Option[V]]
 
-  def put(key: K, value: V): F[Option[V]]
+  def put(key: K, value: V): F[V]
 }
