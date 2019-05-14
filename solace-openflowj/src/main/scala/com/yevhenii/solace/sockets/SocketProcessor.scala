@@ -12,6 +12,9 @@ import com.yevhenii.solace.processing.OFSwitch.PacketIn
 import io.netty.buffer.Unpooled
 import org.projectfloodlight.openflow.protocol._
 
+import scala.annotation.tailrec
+import scala.util.{Success, Try}
+
 class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
   extends Actor with ActorLogging {
 
@@ -63,8 +66,21 @@ class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
     context.stop(switch)
   }
 
-  def processData(data: ByteString): Unit = {
-    val message = factory.getReader.readFrom(Unpooled.copiedBuffer(data.toByteBuffer))
+  def readMessages(data: ByteString): List[OFMessage] = {
+    val buffer = data.toByteBuffer
+
+    @tailrec def loop(acc: List[OFMessage]): List[OFMessage] = {
+      val tryMsg = Try { factory.getReader.readFrom(Unpooled.copiedBuffer(buffer)) }
+      tryMsg match {
+        case Success(msg) => loop(msg :: acc)
+        case _ => acc
+      }
+    }
+
+    loop(Nil)
+  }
+
+  def processMessage(message: OFMessage): Unit = {
     message.getType match {
       case OFType.PACKET_IN =>
         log.info(s"Got PACKET_IN from $remote")
@@ -78,6 +94,10 @@ class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
       case t =>
         log.warning(s"Unhandled message $t from $remote")
     }
+  }
+
+  def processData(data: ByteString): Unit = {
+    readMessages(data).foreach(processMessage)
   }
 
   def sayHi(): Unit = {

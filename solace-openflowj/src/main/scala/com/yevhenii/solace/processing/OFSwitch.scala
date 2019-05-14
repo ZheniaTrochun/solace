@@ -63,57 +63,59 @@ class OFSwitch(factory: OFFactory) extends Actor with ActorLogging {
 
   def flowAdd(bufferId: OFBufferId, inMatch: OFMatch, outPort: Short, inPort: Short): Unit = {
     // todo
-    val fm = new OFFlowModOld()
-    fm.setBufferId(bufferId.getInt)
-    fm.setCommand(0.toShort)
-    fm.setCookie(0L)
-    fm.setFlags(0.toShort)
-    fm.setHardTimeout(0.toShort)
-    fm.setIdleTimeout(5.toShort)
-
-    inMatch.setInputPort(inPort)
-    inMatch.setWildcards(0)
-    fm.setMatch(inMatch)
-
-    fm.setOutPort(OFPort.ANY)
-    fm.setPriority(0.toShort)
-
-    val output = new OFActionOutput()
-    output.setMaxLength(0.toShort)
-    output.setPort(outPort)
-    val actions = new util.ArrayList[OFActionOld]()
-    actions.add(output)
-    fm.setActions(actions)
-    fm.setLength(U16.t(OFFlowModOld.MINIMUM_LENGTH + OFActionOutput.MINIMUM_LENGTH))
-
-//    val fm = factory.buildFlowAdd()
-//    fm.setBufferId(bufferId)
-//    fm.setCookie(U64.ZERO)
+//    val fm = new OFFlowModOld()
+//    fm.setBufferId(bufferId.getInt)
+//    fm.setCommand(0.toShort)
+//    fm.setCookie(0L)
+//    fm.setFlags(0.toShort)
 //    fm.setHardTimeout(0.toShort)
 //    fm.setIdleTimeout(5.toShort)
 //
-//    val newMatch = factory.buildMatch()
-//      .setExact(MatchField.ETH_DST, MacAddress.of(inMatch.getDataLayerDestination))
-//      .setExact(MatchField.ETH_SRC, MacAddress.of(inMatch.getDataLayerSource))
-//      .setExact(MatchField.IN_PORT, OFPort.ofShort(inPort))
-//      .build()
+//    inMatch.setInputPort(inPort)
+//    inMatch.setWildcards(0)
+//    fm.setMatch(inMatch)
 //
-//    fm.setMatch(newMatch)
 //    fm.setOutPort(OFPort.ANY)
 //    fm.setPriority(0.toShort)
-//    val action = factory.actions().buildOutput()
-//      .setMaxLen(0)
-//      .setPort(OFPort.ofShort(outPort))
-//      .build()
-//    val actions = new util.ArrayList[OFAction]
-//    actions.add(action)
+//
+//    val output = new OFActionOutput()
+//    output.setMaxLength(0.toShort)
+//    output.setPort(outPort)
+//    val actions = new util.ArrayList[OFActionOld]()
+//    actions.add(output)
 //    fm.setActions(actions)
+//    fm.setLength(U16.t(OFFlowModOld.MINIMUM_LENGTH + OFActionOutput.MINIMUM_LENGTH))
+//
+//    val buffer = ByteBuffer.allocate(DefaultBufferSize)
+//    fm.writeTo(buffer)
+////    buffer.flip()
+//    val bytes = ByteString(buffer)
+//    sender() ! WriteRawMessage(bytes)
 
-//    val buffer = Unpooled.buffer(0, DefaultBufferSize)
-    val buffer = ByteBuffer.allocate(DefaultBufferSize)
-    fm.writeTo(buffer)
-    val bytes = ByteString(buffer)
-    sender() ! WriteRawMessage(bytes)
+    val fm = factory.buildFlowAdd()
+    fm.setBufferId(bufferId)
+    fm.setCookie(U64.ZERO)
+    fm.setHardTimeout(0.toShort)
+    fm.setIdleTimeout(5.toShort)
+
+    val newMatch = factory.buildMatch()
+      .setExact(MatchField.ETH_DST, MacAddress.of(inMatch.getDataLayerDestination))
+      .setExact(MatchField.ETH_SRC, MacAddress.of(inMatch.getDataLayerSource))
+      .setExact(MatchField.IN_PORT, OFPort.ofShort(inPort))
+      .build()
+
+    fm.setMatch(newMatch)
+    fm.setOutPort(OFPort.ANY)
+    fm.setPriority(0.toShort)
+    val action = factory.actions().buildOutput()
+      .setMaxLen(0)
+      .setPort(OFPort.ofShort(outPort))
+      .build()
+    val actions = new util.ArrayList[OFAction]
+    actions.add(action)
+    fm.setActions(actions)
+
+    sender() ! WriteMessage(fm.build())
   }
 
   def packetOut(bufferId: OFBufferId, pi: OFPacketIn, outPortOpt: Option[Short]): Unit = {
