@@ -36,8 +36,8 @@ class OFSwitch(factory: OFFactory) extends Actor with ActorLogging {
     learnTable(dlSrc, dlSrcKey, pi.getInPort.getShortPortNumber)
 
     // if the destination is not multicast, look it up
-    val outPort =
-      if ((dlDst(0) & 0x1) == 0) table.get(dlDstKey).value
+    val outPort: Option[Short] =
+      if ((dlDst(0) & 0x1) == 0) table.get(dlDstKey)
       else None
 
     outPort.foreach { p =>
@@ -104,7 +104,7 @@ class OFSwitch(factory: OFFactory) extends Actor with ActorLogging {
   def learnTable(dlSrc: Array[Byte], dlSrcKey: Int, inPort: Short): Unit = {
     // if the src is not multicast, learn it
     if ((dlSrc(0) & 0x1) == 0) {
-      table.get(dlSrcKey).value.filterNot(_ == inPort).fold[Unit] {
+      table.get(dlSrcKey).filterNot(_ == inPort).fold[Unit] {
         table.put(dlSrcKey, inPort)
       }{ p =>
         log.debug(s"Table is already contains port $p for $dlSrc")
