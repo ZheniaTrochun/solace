@@ -33,12 +33,16 @@ class OFSwitch(factory: OFFactory) extends Actor with ActorLogging {
     val dlSrcKey = util.Arrays.hashCode(dlSrc)
     val bufferId = pi.getBufferId
 
-    learnTable(dlSrc, dlDstKey, pi.getInPort.getShortPortNumber)
+    learnTable(dlSrc, dlSrcKey, pi.getInPort.getShortPortNumber)
 
     // if the destination is not multicast, look it up
     val outPort =
       if ((dlDst(0) & 0x1) == 0) table.get(dlDstKey).value
       else None
+
+    outPort.foreach { p =>
+      println(p)
+    }
 
     // push a flow mod if we know where the packet should be going
     outPort.foreach(p => flowAdd(bufferId, inMatch, p, pi.getInPort.getShortPortNumber))

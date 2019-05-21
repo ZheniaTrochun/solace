@@ -67,12 +67,17 @@ class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
   }
 
   def readMessages(data: ByteString): List[OFMessage] = {
-    val buffer = data.toByteBuffer
+    val buffer = Unpooled.copiedBuffer(data.toByteBuffer)
 
     @tailrec def loop(acc: List[OFMessage]): List[OFMessage] = {
-      val tryMsg = Try { factory.getReader.readFrom(Unpooled.copiedBuffer(buffer)) }
-      tryMsg match {
-        case Success(msg) => loop(msg :: acc)
+//      val tryMsg = Try { factory.getReader.readFrom(buffer) }
+//      tryMsg match {
+//        case Success(msg) => loop(msg :: acc)
+//        case _ => acc
+//      }
+      val optMsg = Option { factory.getReader.readFrom(buffer) }
+      optMsg match {
+        case Some(msg) => loop(msg :: acc)
         case _ => acc
       }
     }
@@ -111,7 +116,11 @@ class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
     val buffer = Unpooled.buffer(0, DefaultBufferSize)
     message.writeTo(buffer)
     val nioBuffer = buffer.nioBuffer()
-    connection ! Write(ByteString(nioBuffer))
+    val bytestring = ByteString(nioBuffer)
+    if (message.getType == OFType.FLOW_MOD) {
+      println("debug is here")
+    }
+    connection ! Write(bytestring)
   }
 
   def write(message: ByteString): Unit = {

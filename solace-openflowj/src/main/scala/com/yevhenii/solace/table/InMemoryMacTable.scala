@@ -10,7 +10,7 @@ class InMemoryMacTable extends MacTable[Int, Short, IdentityEffect] {
   override def contains(key: Int): IdentityEffect[Boolean] = IdentityEffect(table.containsKey(key))
 
   override def get(key: Int): IdentityEffect[Option[Short]] = IdentityEffect(
-    Try(table.get(key)).toOption
+    Option(table.get(key))
   )
 
   override def put(key: Int, value: Short): IdentityEffect[Boolean] = {
