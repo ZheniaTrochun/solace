@@ -26,13 +26,16 @@ class SocketManager(host: String, port: Int) extends Actor with ActorLogging {
       log.info("listening on port {}", localAddress.getPort)
 
     case CommandFailed(Bind(_, local, _, _, _)) =>
-      log.warning(s"cannot bind to [$local]")
+      log.error(s"cannot bind to [$local]")
       context.stop(self)
 
-    case Connected(remote, local) =>
+    case Connected(remote, _) =>
       log.info("received connection from {}", remote)
       val handler = context.actorOf(Props(classOf[SocketProcessor], sender(), remote))
       sender() ! Register(handler, keepOpenOnPeerClosed = true)
+
+    case msg =>
+      log.warning(s"unhandled message [$msg]")
   }
 
 }

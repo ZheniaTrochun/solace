@@ -70,11 +70,6 @@ class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
     val buffer = Unpooled.copiedBuffer(data.toByteBuffer)
 
     @tailrec def loop(acc: List[OFMessage]): List[OFMessage] = {
-//      val tryMsg = Try { factory.getReader.readFrom(buffer) }
-//      tryMsg match {
-//        case Success(msg) => loop(msg :: acc)
-//        case _ => acc
-//      }
       val optMsg = Option { factory.getReader.readFrom(buffer) }
       optMsg match {
         case Some(msg) => loop(msg :: acc)
