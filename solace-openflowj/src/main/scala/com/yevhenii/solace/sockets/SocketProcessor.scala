@@ -45,7 +45,6 @@ class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
   // start out in optimistic write-through mode
   def receive: Receive = {
     case Received(data) =>
-      //      connection ! Write(data, Connected(remote, localAddress))
       log.info(s"received raw data, size: ${data.size}")
       transferred += data.size
       processData(data)
@@ -58,6 +57,9 @@ class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
 
     case PeerClosed =>
       log.warning("peer closed")
+
+    case unknown =>
+      log.warning(s"unhandled message [$unknown]")
   }
 
   override def postStop(): Unit = {
