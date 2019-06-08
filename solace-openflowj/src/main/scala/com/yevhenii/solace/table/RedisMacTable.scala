@@ -1,10 +1,17 @@
 package com.yevhenii.solace.table
 
+import akka.actor.ActorSystem
 import scredis._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class RedisMacTable(host: String, port: Int) extends MacTable[String, String, Future] {
+class RedisMacTable(
+  host: String,
+  port: Int
+)(
+  implicit system: ActorSystem,
+  ec: ExecutionContext
+) extends MacTable[String, String, Future] {
 
   val redis = Client(host = host, port = port)
 
