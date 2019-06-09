@@ -4,22 +4,59 @@ services:
   solace:
     image: solace:latest
     build:
-      context: ./solace-server
+      context: ./solace-openflowj
     ports:
       - "6633:6633"
     networks:
       - solace-net
     depends_on:
-      - formatter
+      - redis
+      - telegraf
 
-  formatter:
-    image: formatter:latest
-    build:
-      context: ./solace-formatter
-    ports:
-      - "8080:8080"
+  redis:
+    image: redis:latest
     networks:
       - solace-net
+
+  influxdb:
+    image: influxdb:latest
+    ports:
+      - "8083:8083"
+      - "8086:8086"
+      - "8090:8090"
+    env_file:
+      - 'influxdb/env.influxdb'
+    networks:
+      - solace-net
+    volumes:
+      # Data persistency
+      # sudo mkdir -p /tmp/docker/influxdb/data
+      - /tmp/docker/influxdb/data:/var/lib/influxdb
+
+  telegraf:
+    image: telegraf:latest
+    networks:
+      - solace-net
+    volumes:
+      - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      - influxdb
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    env_file:
+      - 'grafana/env.grafana'
+    networks:
+      - solace-net
+    volumes:
+      # Data persistency
+      # sudo mkdir -p /tmp/docker/grafana/data; chown 472:472 /tmp/docker/grafana/data
+      - /tmp/docker/grafana/data:/var/lib/grafana
+    depends_on:
+      - influxdb
+      - telegraf
 
 networks:
   solace-net:
