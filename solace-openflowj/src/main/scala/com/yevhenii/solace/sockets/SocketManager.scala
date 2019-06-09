@@ -4,8 +4,11 @@ import java.net.InetSocketAddress
 
 import akka.actor.{Actor, ActorLogging, Props, SupervisorStrategy}
 import akka.io._
+import com.yevhenii.solace.metrics.MetricReporter
+import com.yevhenii.solace.table.RedisMacTable
 
-class SocketManager(host: String, port: Int) extends Actor with ActorLogging {
+class SocketManager(host: String, port: Int, macTable: RedisMacTable, metricReporter: MetricReporter)
+  extends Actor with ActorLogging {
 
   import Tcp._
   import context.system
@@ -31,11 +34,16 @@ class SocketManager(host: String, port: Int) extends Actor with ActorLogging {
 
     case Connected(remote, _) =>
       log.info("received connection from {}", remote)
-      val handler = context.actorOf(Props(classOf[SocketProcessor], sender(), remote))
+      val handler = context.actorOf(SocketProcessor.props(sender(), remote, macTable, metricReporter))
       sender() ! Register(handler, keepOpenOnPeerClosed = true)
 
     case msg =>
       log.warning(s"unhandled message [$msg]")
   }
+}
 
+object SocketManager {
+  def props(host: String, port: Int, macTable: RedisMacTable, metricReporter: MetricReporter): Props = Props(
+    new SocketManager(host, port, macTable, metricReporter)
+  )
 }

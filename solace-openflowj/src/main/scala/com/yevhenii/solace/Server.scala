@@ -6,9 +6,11 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
+import com.yevhenii.solace.metrics.MetricReporter
 import com.yevhenii.solace.sockets.SocketManager
 import com.yevhenii.solace.table.RedisMacTable
 import com.yevhenii.solace.tracing.TracingRoutes
+import com.yevhenii.solace.config.ScalaConfig._
 
 import scala.concurrent.ExecutionContext.Implicits
 import scala.concurrent.duration._
@@ -22,23 +24,34 @@ object Server {
   implicit val ec = Implicits.global
   implicit val timeout = Timeout(20 seconds)
 
+  val containerId = Option(System.getenv("HOSTNAME")).getOrElse("localhost")
+  val config = ConfigFactory.load()
+  val host = config.getString("solace.host")
+  val ofPort = config.getInt("solace.of.port")
+
+  val httpEnabled = config.getOrElse("solace.http.enabled", false)
+
   def main(args: Array[String]): Unit = {
-    val config = ConfigFactory.load()
+    val macTable = new RedisMacTable(config)
+    val metricReporter = new MetricReporter(config, containerId)
 
-    val host = config.getString("solace.host")
-    val port = config.getInt("solace.port")
+    val manager = system.actorOf(SocketManager.props(host, ofPort, macTable, metricReporter), "socket-manager")
 
-    val redisHost = config.getString("redis.host")
-    val redisPort = config.getInt("redis.port")
+    logger.info(s"Solace server instance started in container [$containerId] on [$host:$ofPort]")
 
-    val metricsHost = config.getString("metrics.host")
-    val metricsPort = config.getInt("metrics.port")
+    if (httpEnabled) {
+      startHttpClient()
+    } else {
+      logger.info(s"No Solace http client available in $containerId")
+    }
+  }
 
-    val redis = new RedisMacTable(redisHost, redisPort)
-
-    val manager = system.actorOf(Props(classOf[SocketManager], host, port), "socket-manager")
+  def startHttpClient(): Unit = {
+    val httpPort = config.getOrElse("solace.http.port", 8081)
 
     val tracingRoutes = new TracingRoutes()
-    Http().bindAndHandle(tracingRoutes.routes, "localhost", 8081)
+    Http().bindAndHandle(tracingRoutes.routes, "localhost", httpPort)
+
+    logger.info(s"Solace server http client started in container [$containerId] on [$host:$httpPort]")
   }
 }

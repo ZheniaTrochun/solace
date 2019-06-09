@@ -21,3 +21,5 @@ libraryDependencies += "com.typesafe.akka" %% "akka-http"   % "10.1.8"
 libraryDependencies += "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.8"
 // cats
 libraryDependencies += "org.typelevel" %% "cats-core" % "2.0.0-M1"
+// StatsD
+libraryDependencies += "com.datadoghq" % "java-dogstatsd-client" % "2.7"

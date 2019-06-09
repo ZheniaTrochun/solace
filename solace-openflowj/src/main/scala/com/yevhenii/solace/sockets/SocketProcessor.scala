@@ -1,22 +1,26 @@
 package com.yevhenii.solace.sockets
 
 import java.net.InetSocketAddress
-import java.nio.ByteBuffer
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.io.Tcp
 import akka.util.ByteString
 import com.typesafe.config.ConfigFactory
+import com.yevhenii.solace.metrics.MetricReporter
 import com.yevhenii.solace.processing.OFSwitch
 import com.yevhenii.solace.processing.OFSwitch.PacketIn
+import com.yevhenii.solace.table.RedisMacTable
 import io.netty.buffer.Unpooled
 import org.projectfloodlight.openflow.protocol._
 
 import scala.annotation.tailrec
-import scala.util.{Success, Try}
 
-class SocketProcessor(connection: ActorRef, remote: InetSocketAddress)
-  extends Actor with ActorLogging {
+class SocketProcessor(
+  connection: ActorRef,
+  remote: InetSocketAddress,
+  macTable: RedisMacTable,
+  metricReporter: MetricReporter
+) extends Actor with ActorLogging {
 
   import Tcp._
   import SocketProcessor._
@@ -131,4 +135,11 @@ object SocketProcessor {
 
   case class WriteMessage(message: OFMessage)
   case class WriteRawMessage(bytes: ByteString)
+
+  def props(
+    connection: ActorRef,
+    remote: InetSocketAddress,
+    macTable: RedisMacTable,
+    metricReporter: MetricReporter
+  ): Props = Props(new SocketProcessor(connection, remote, macTable, metricReporter))
 }
