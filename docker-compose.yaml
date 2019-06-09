@@ -20,17 +20,15 @@ services:
 
   influxdb:
     image: influxdb:latest
-    ports:
-      - "8083:8083"
-      - "8086:8086"
-      - "8090:8090"
+#    ports:
+#      - "8083:8083"
+#      - "8086:8086"
+#      - "8090:8090"
     env_file:
       - 'influxdb/env.influxdb'
     networks:
       - solace-net
     volumes:
-      # Data persistency
-      # sudo mkdir -p /tmp/docker/influxdb/data
       - /tmp/docker/influxdb/data:/var/lib/influxdb
 
   telegraf:
@@ -51,8 +49,6 @@ services:
     networks:
       - solace-net
     volumes:
-      # Data persistency
-      # sudo mkdir -p /tmp/docker/grafana/data; chown 472:472 /tmp/docker/grafana/data
       - /tmp/docker/grafana/data:/var/lib/grafana
     depends_on:
       - influxdb
