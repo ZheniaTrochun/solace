@@ -1,23 +1,10 @@
 package com.yevhenii.solace.metrics
 
-import org.projectfloodlight.openflow.protocol.OFType
+object Metrics {
+  type Metrics = List[(String, Any)]
 
-sealed trait Metrics
-
-case class OpenFlowMetrics(
-  inMsgType: OFType,
-  outMsgType: OFType,
-  size: Int,
-  sender: String,
-  time: Long,
-  dpid: String
-) extends Metrics
-
-case class EthernetMetrics(
-  response: OFType,
-  size: Int,
-  sender: String,
-  receiver: String,
-  time: Long,
-  dpid: String
-) extends Metrics
+  val IncomingOF = "of_incoming_message"
+  val ResultOF = "of_result_message"
+  val SizeOF = "of_message_size"
+  val ProcessingTime = "processing_time"
+}

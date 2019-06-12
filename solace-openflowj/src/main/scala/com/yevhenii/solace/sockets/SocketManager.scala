@@ -7,7 +7,9 @@ import akka.io._
 import com.yevhenii.solace.metrics.MetricReporter
 import com.yevhenii.solace.table.RedisMacTable
 
-class SocketManager(host: String, port: Int, macTable: RedisMacTable, metricReporter: MetricReporter)
+import scala.concurrent.ExecutionContext
+
+class SocketManager(host: String, port: Int, macTable: RedisMacTable, metricReporter: MetricReporter)(implicit ec: ExecutionContext)
   extends Actor with ActorLogging {
 
   import Tcp._
@@ -43,7 +45,8 @@ class SocketManager(host: String, port: Int, macTable: RedisMacTable, metricRepo
 }
 
 object SocketManager {
-  def props(host: String, port: Int, macTable: RedisMacTable, metricReporter: MetricReporter): Props = Props(
-    new SocketManager(host, port, macTable, metricReporter)
+  def props(host: String, port: Int, macTable: RedisMacTable, metricReporter: MetricReporter)
+    (implicit ec: ExecutionContext): Props = Props(
+      new SocketManager(host, port, macTable, metricReporter)
   )
 }
