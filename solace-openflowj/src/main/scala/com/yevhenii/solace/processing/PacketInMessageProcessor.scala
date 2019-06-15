@@ -43,6 +43,7 @@ trait PacketInMessageProcessor {
     outPort.foreach(_.foreach(p => logger.debug(s"Output port [$p]")))
 
     def processPort(optPort: Option[Short]): Writer[Metrics, OFMessage] = {
+      logger.debug(s"out port = $optPort")
       if (bufferId.getInt == 0xffffffff) {
         packetOut(bufferId, pi, optPort)
       } else {
@@ -58,6 +59,7 @@ trait PacketInMessageProcessor {
   }
 
   def flowAdd(bufferId: OFBufferId, inMatch: OFMatch, outPort: Short, inPort: Short): Writer[Metrics, OFMessage] = {
+    logger.debug(s"building packet_out [$bufferId] [$inMatch] [$outPort] [$inPort]")
     val fm = factory.buildFlowAdd()
     fm.setBufferId(bufferId)
     fm.setCookie(U64.ZERO)
@@ -88,6 +90,7 @@ trait PacketInMessageProcessor {
   }
 
   def packetOut(bufferId: OFBufferId, pi: OFPacketIn, outPortOpt: Option[Short]): Writer[Metrics, OFMessage] = {
+    logger.debug(s"building packet_out [$bufferId] [$pi] [$outPortOpt]")
     val po = factory.buildPacketOut()
     po.setBufferId(bufferId)
     po.setInPort(pi.getInPort)
@@ -118,7 +121,7 @@ trait PacketInMessageProcessor {
       optPort.filterNot(_ == inPort).fold[Unit] {
         table.put(dlSrcKey, inPort)
       } { p =>
-        logger.debug(s"Table is already contains port $p for $dlSrcKey")
+        logger.debug(s"Table is already contains port $p for $dlSrcKey ($dlSrc)")
       }
     }
     // if the src is not multicast, learn it
