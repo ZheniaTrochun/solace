@@ -29,8 +29,8 @@ trait PacketInMessageProcessor {
     val dlSrc = inMatch.getDataLayerSource
     val bufferId = pi.getBufferId
 
-    val dlSrcKey = MacAddress.of(inMatch.getDataLayerDestination).toString
-    val dlDstKey = MacAddress.of(inMatch.getDataLayerDestination).toString
+    val dlSrcKey = MacAddress.of(dlSrc).toString
+    val dlDstKey = MacAddress.of(dlDst).toString
     val msgSize = pi.getData.length
 
     learnTable(dlSrc, pi.getInPort.getShortPortNumber, dlSrcKey)
