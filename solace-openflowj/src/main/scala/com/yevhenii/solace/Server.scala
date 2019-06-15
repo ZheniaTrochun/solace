@@ -8,7 +8,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger
 import com.yevhenii.solace.metrics.MetricReporter
 import com.yevhenii.solace.sockets.SocketManager
-import com.yevhenii.solace.table.RedisMacTable
+import com.yevhenii.solace.table.{AsyncInMemoryMacTable, RedisMacTable}
 import com.yevhenii.solace.tracing.TracingRoutes
 import com.yevhenii.solace.config.ScalaConfig._
 
@@ -32,7 +32,8 @@ object Server {
   val httpEnabled = config.getOrElse("solace.http.enabled", false)
 
   def main(args: Array[String]): Unit = {
-    val macTable = new RedisMacTable(config)
+//    val macTable = new RedisMacTable(config)
+    val macTable = new AsyncInMemoryMacTable
     val metricReporter = new MetricReporter(config, containerId)
 
     val manager = system.actorOf(SocketManager.props(host, ofPort, macTable, metricReporter), "socket-manager")

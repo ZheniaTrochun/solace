@@ -7,7 +7,7 @@ import cats.instances.list._
 import com.typesafe.scalalogging.Logger
 import com.yevhenii.solace.metrics.Metrics._
 import com.yevhenii.solace.protocol.OFMatch
-import com.yevhenii.solace.table.RedisMacTable
+import com.yevhenii.solace.table.{MacTable, RedisMacTable}
 import org.projectfloodlight.openflow.protocol.`match`.MatchField
 import org.projectfloodlight.openflow.protocol.action.OFAction
 import org.projectfloodlight.openflow.protocol.{OFFactory, OFMessage, OFPacketIn, OFType}
@@ -19,7 +19,7 @@ trait PacketInMessageProcessor {
 
   val logger = Logger(classOf[PacketInMessageProcessor])
 
-  val table: RedisMacTable
+  val table: MacTable[String, Short, Future]
   val factory: OFFactory
 
   def processPacketIn(pi: OFPacketIn)(implicit ec: ExecutionContext): Future[Writer[Metrics, List[OFMessage]]] = {

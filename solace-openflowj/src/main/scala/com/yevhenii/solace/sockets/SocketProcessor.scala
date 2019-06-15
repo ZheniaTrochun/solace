@@ -11,7 +11,7 @@ import com.typesafe.config.ConfigFactory
 import com.yevhenii.solace.metrics.MetricReporter
 import com.yevhenii.solace.metrics.Metrics._
 import com.yevhenii.solace.processing.{MessageProcessor, OFSwitch}
-import com.yevhenii.solace.table.RedisMacTable
+import com.yevhenii.solace.table.{MacTable, RedisMacTable}
 import io.netty.buffer.Unpooled
 import org.projectfloodlight.openflow.protocol._
 
@@ -21,7 +21,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class SocketProcessor(
   connection: ActorRef,
   remote: InetSocketAddress,
-  macTable: RedisMacTable,
+  macTable: MacTable[String, Short, Future],
   metricReporter: MetricReporter
 )(
   implicit val ec: ExecutionContext
@@ -136,7 +136,7 @@ object SocketProcessor {
   def props(
     connection: ActorRef,
     remote: InetSocketAddress,
-    macTable: RedisMacTable,
+    macTable: MacTable[String, Short, Future],
     metricReporter: MetricReporter)(
     implicit ec: ExecutionContext
   ): Props = Props(new SocketProcessor(connection, remote, macTable, metricReporter))

@@ -5,11 +5,11 @@ import java.net.InetSocketAddress
 import akka.actor.{Actor, ActorLogging, Props, SupervisorStrategy}
 import akka.io._
 import com.yevhenii.solace.metrics.MetricReporter
-import com.yevhenii.solace.table.RedisMacTable
+import com.yevhenii.solace.table.{MacTable, RedisMacTable}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
-class SocketManager(host: String, port: Int, macTable: RedisMacTable, metricReporter: MetricReporter)(implicit ec: ExecutionContext)
+class SocketManager(host: String, port: Int, macTable: MacTable[String, Short, Future], metricReporter: MetricReporter)(implicit ec: ExecutionContext)
   extends Actor with ActorLogging {
 
   import Tcp._
@@ -45,7 +45,7 @@ class SocketManager(host: String, port: Int, macTable: RedisMacTable, metricRepo
 }
 
 object SocketManager {
-  def props(host: String, port: Int, macTable: RedisMacTable, metricReporter: MetricReporter)
+  def props(host: String, port: Int, macTable: MacTable[String, Short, Future], metricReporter: MetricReporter)
     (implicit ec: ExecutionContext): Props = Props(
       new SocketManager(host, port, macTable, metricReporter)
   )
