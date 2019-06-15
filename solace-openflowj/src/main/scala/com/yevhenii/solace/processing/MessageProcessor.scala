@@ -5,6 +5,7 @@ import cats.instances.list._
 import com.yevhenii.solace.metrics.Metrics._
 import com.yevhenii.solace.table.{MacTable, RedisMacTable}
 import org.projectfloodlight.openflow.protocol.{OFEchoRequest, OFErrorMsg, OFFactory, OFHello, OFMessage, OFPacketIn, OFType}
+import org.projectfloodlight.openflow.types.DatapathId
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -16,9 +17,9 @@ class MessageProcessor(
   with PacketInMessageProcessor
   with ErrorMessageProcessor {
 
-  type Result = Writer[Metrics, List[OFMessage]]
+  type Result = Writer[Metrics, Option[OFMessage]]
 
-  def processMessageInternal(msg: OFMessage)(implicit ec: ExecutionContext): Future[Result] = msg.getType match {
+  def processMessageInternal(msg: OFMessage)(implicit ec: ExecutionContext, dpid: DatapathId): Future[Result] = msg.getType match {
     case OFType.PACKET_IN =>
       processPacketIn(msg.asInstanceOf[OFPacketIn])
     case OFType.ECHO_REQUEST =>
@@ -30,15 +31,15 @@ class MessageProcessor(
     case OFType.FEATURES_REPLY =>
       Future.failed(new IllegalArgumentException("Not Implemented yet"))
     case other =>
-      Future.failed(new IllegalArgumentException(other.toString))
+      Future.failed(new IllegalArgumentException(s"Not Implemented yet: $other"))
   }
 
-  def processMessage(msg: OFMessage)(implicit ec: ExecutionContext): Future[Result] = {
+  def processMessage(msg: OFMessage)(implicit ec: ExecutionContext, dpid: DatapathId): Future[Result] = {
 //    withErrorHandling(withBenchmark(processMessageInternal)).apply(msg)
     withBenchmark(processMessageInternal).apply(msg)
   }
 
-  def withBenchmark(f: OFMessage => Future[Result])(implicit ec: ExecutionContext): OFMessage => Future[Result] = msg => {
+  def withBenchmark(f: OFMessage => Future[Result])(implicit ec: ExecutionContext, dpid: DatapathId): OFMessage => Future[Result] = msg => {
     val start = System.nanoTime()
     val res = f(msg)
 
@@ -48,5 +49,5 @@ class MessageProcessor(
     }
   }
 
-  def withErrorHandling(msg: OFMessage => Future[Result])(implicit ec: ExecutionContext): OFMessage => Future[Result] = ???
+  def withErrorHandling(msg: OFMessage => Future[Result])(implicit ec: ExecutionContext, dpid: DatapathId): OFMessage => Future[Result] = ???
 }

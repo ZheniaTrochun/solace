@@ -14,6 +14,7 @@ import com.yevhenii.solace.processing.{MessageProcessor, OFSwitch}
 import com.yevhenii.solace.table.{MacTable, RedisMacTable}
 import io.netty.buffer.Unpooled
 import org.projectfloodlight.openflow.protocol._
+import org.projectfloodlight.openflow.types.DatapathId
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,7 +31,7 @@ class SocketProcessor(
   import Tcp._
   import SocketProcessor._
 
-  private var dpid = "0"
+  implicit var dpid: DatapathId = DatapathId.NONE
   private var totalTransferred = 0
 
   private val config = ConfigFactory.load()
@@ -84,7 +85,7 @@ class SocketProcessor(
   }
 
   def processData(data: ByteString): Unit = {
-    def processResponse(respWriterFuture: Future[Writer[Metrics, List[OFMessage]]]): Unit = {
+    def processResponse(respWriterFuture: Future[Writer[Metrics, Option[OFMessage]]]): Unit = {
       respWriterFuture.map {
         respWriter =>
           val withLog = for {
@@ -104,16 +105,20 @@ class SocketProcessor(
       }
     }
 
-    readMessages(data)
+    val msgs = readMessages(data)
+    // TODO move to better place
+    msgs.find(_.getType == OFType.FEATURES_REPLY).map(_.asInstanceOf[OFFeaturesReply]).foreach(msg => dpid = msg.getDatapathId)
+
+    msgs.filterNot(_.getType == OFType.FEATURES_REPLY)
       .map(processor.processMessage)
       .foreach(processResponse)
   }
 
-//  def sayHi(): Unit = {
-//    log.info(s"Got new connection from $remote")
-//    write(factory.buildHello().build())
-//    write(factory.featuresRequest())
-//  }
+  def sayHi(): Unit = {
+    log.info(s"Got new connection from $remote")
+    write(factory.buildHello().build())
+    write(factory.featuresRequest())
+  }
 
   def write(message: OFMessage): Unit = {
     log.info(s"Writing to socket message ${message.getType}")
