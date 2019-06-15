@@ -8,7 +8,7 @@ import scala.concurrent.Future
 
 trait ErrorMessageProcessor {
 
-  def processError(msg: OFErrorMsg): Future[Writer[Metrics, List[OFMessage]]] = Future.successful {
-    Writer(List(IncomingOF -> "ERROR"), Nil)
+  def processError(msg: OFErrorMsg): Future[Writer[Metrics, Option[OFMessage]]] = Future.successful {
+    Writer(List(IncomingOF -> "ERROR"), None)
   }
 }

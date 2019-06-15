@@ -11,7 +11,7 @@ import com.yevhenii.solace.table.{MacTable, RedisMacTable}
 import org.projectfloodlight.openflow.protocol.`match`.MatchField
 import org.projectfloodlight.openflow.protocol.action.OFAction
 import org.projectfloodlight.openflow.protocol.{OFFactory, OFMessage, OFPacketIn, OFType}
-import org.projectfloodlight.openflow.types.{MacAddress, OFBufferId, OFPort, U64}
+import org.projectfloodlight.openflow.types.{DatapathId, MacAddress, OFBufferId, OFPort, U64}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -22,7 +22,7 @@ trait PacketInMessageProcessor {
   val table: MacTable[String, Short, Future]
   val factory: OFFactory
 
-  def processPacketIn(pi: OFPacketIn)(implicit ec: ExecutionContext): Future[Writer[Metrics, List[OFMessage]]] = {
+  def processPacketIn(pi: OFPacketIn)(implicit ec: ExecutionContext, dpid: DatapathId): Future[Writer[Metrics, Option[OFMessage]]] = {
     val inMatch = new OFMatch()
     inMatch.loadFromPacket(pi.getData, pi.getInPort.getShortPortNumber)
     val dlDst = inMatch.getDataLayerDestination
@@ -55,7 +55,7 @@ trait PacketInMessageProcessor {
 
     outPort.map(processPort)
       .map(_.tell(List(EthernetSender -> dlSrcKey, EthernetReceiver -> dlDstKey, SizeEthernet -> msgSize)))
-      .map(_.map(List(_)))
+      .map(_.map(Some(_)))
   }
 
   def flowAdd(bufferId: OFBufferId, inMatch: OFMatch, outPort: Short, inPort: Short): Writer[Metrics, OFMessage] = {
@@ -114,7 +114,7 @@ trait PacketInMessageProcessor {
     )
   }
 
-  def learnTable(dlSrc: Array[Byte], inPort: Short, dlSrcKey: String)(implicit ec: ExecutionContext): Future[Unit] = {
+  def learnTable(dlSrc: Array[Byte], inPort: Short, dlSrcKey: String)(implicit ec: ExecutionContext, dpid: DatapathId): Future[Unit] = {
 //    val key = new String(dlSrc)
 
     def addPort(optPort: Option[Short]): Unit = {

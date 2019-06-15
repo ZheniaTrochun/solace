@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorLogging}
 import com.yevhenii.solace.table.InMemoryMacTable
 import org.projectfloodlight.openflow.protocol._
 import org.projectfloodlight.openflow.protocol.action.OFAction
-import org.projectfloodlight.openflow.types.{MacAddress, OFBufferId, OFPort, U64}
+import org.projectfloodlight.openflow.types.{DatapathId, MacAddress, OFBufferId, OFPort, U64}
 import java.util
 
 import com.yevhenii.solace.protocol.OFMatch
@@ -24,6 +24,7 @@ class OFSwitch(factory: OFFactory) extends Actor with ActorLogging {
       log.warning(s"Unknown message $m")
   }
 
+  // TODO outdated
   def processPacketIn(pi: OFPacketIn): Unit = {
     val inMatch = new OFMatch()
     inMatch.loadFromPacket(pi.getData, pi.getInPort.getShortPortNumber)
@@ -37,7 +38,7 @@ class OFSwitch(factory: OFFactory) extends Actor with ActorLogging {
 
     // if the destination is not multicast, look it up
     val outPort: Option[Short] =
-      if ((dlDst(0) & 0x1) == 0) table.get(dlDstKey)
+      if ((dlDst(0) & 0x1) == 0) table.get(dlDstKey)(DatapathId.NONE)
       else None
 
     outPort.foreach { p =>
@@ -104,8 +105,8 @@ class OFSwitch(factory: OFFactory) extends Actor with ActorLogging {
   def learnTable(dlSrc: Array[Byte], dlSrcKey: Int, inPort: Short): Unit = {
     // if the src is not multicast, learn it
     if ((dlSrc(0) & 0x1) == 0) {
-      table.get(dlSrcKey).filterNot(_ == inPort).fold[Unit] {
-        table.put(dlSrcKey, inPort)
+      table.get(dlSrcKey)(DatapathId.NONE).filterNot(_ == inPort).fold[Unit] {
+        table.put(dlSrcKey, inPort)(DatapathId.NONE)
       }{ p =>
         log.debug(s"Table is already contains port $p for $dlSrc")
       }
