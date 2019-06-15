@@ -100,6 +100,7 @@ class SocketProcessor(
           res.foreach(write)
       }.failed.foreach { e =>
         log.error("Error during processing message", e)
+        e.printStackTrace()
       }
     }
 

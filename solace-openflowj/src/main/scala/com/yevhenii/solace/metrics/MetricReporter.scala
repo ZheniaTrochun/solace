@@ -38,7 +38,7 @@ class MetricReporter(config: Config, containerId: String = "localhost") extends 
       case (ResultOF, msg) => statsdClient.increment(s"of_out_$msg", s"dpid:$dpid")
       case (SizeOF, size: Long) => statsdClient.count("of_size", size, s"dpid:$dpid", s"sender:$sender")
       case (ProcessingTime, time: Long) => statsdClient.count("of_in_time", time, s"dpid:$dpid", s"type:$inMsgType")
-      case (key, value) => logger.warn(s"Received more metrics : [$key] -> [$value]")
+      case (key, value) =>
     }
   }
 //    metrics match {
