@@ -84,20 +84,23 @@ class SocketProcessor(
   }
 
   def processData(data: ByteString): Unit = {
-    val start = System.nanoTime()
+    def processResponse(respWriterFuture: Future[Writer[Metrics, List[OFMessage]]]): Unit = {
+      respWriterFuture.map {
+        respWriter =>
+          val withLog = for {
+            msgs <- respWriter
+            _ <- Writer.tell[Metrics](List(SizeOF -> data.size))
+            _ <- Writer.tell[Metrics](List(Sender -> s"${remote.getHostString}:${remote.getPort}"))
+            _ <- Writer.tell[Metrics](List(DPID -> dpid))
+          } yield msgs
 
-    def processResponse(respWriterFuture: Future[Writer[Metrics, List[OFMessage]]]): Unit = respWriterFuture.foreach {
-      respWriter =>
-        val withLog = for {
-          msgs <- respWriter
-          _ <- Writer.tell[Metrics](List(SizeOF -> data.size))
-          _ <- Writer.tell[Metrics](List(ProcessingTime -> (System.nanoTime() - start) / 1000000))
-        } yield msgs
+          val (log, res) = withLog.run
+          metricReporter.report(log)
 
-        val (log, res) = withLog.run
-        metricReporter.report(log)
-
-        res.foreach(write)
+          res.foreach(write)
+      }.failed.foreach { e =>
+        log.error("Error during processing message", e)
+      }
     }
 
     readMessages(data)

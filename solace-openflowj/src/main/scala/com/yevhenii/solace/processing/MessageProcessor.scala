@@ -1,6 +1,7 @@
 package com.yevhenii.solace.processing
 
 import cats.data.Writer
+import cats.instances.list._
 import com.yevhenii.solace.metrics.Metrics._
 import com.yevhenii.solace.table.RedisMacTable
 import org.projectfloodlight.openflow.protocol.{OFEchoRequest, OFErrorMsg, OFFactory, OFHello, OFMessage, OFPacketIn, OFType}
@@ -10,9 +11,14 @@ import scala.concurrent.{ExecutionContext, Future}
 class MessageProcessor(
   val table: RedisMacTable,
   val factory: OFFactory
-) extends HelloMessageProcessor with EchoMessageProcessor with PacketInMessageProcessor with ErrorMessageProcessor {
+) extends HelloMessageProcessor
+  with EchoMessageProcessor
+  with PacketInMessageProcessor
+  with ErrorMessageProcessor {
 
-  def processMessage(msg: OFMessage)(implicit ec: ExecutionContext): Future[Writer[Metrics, List[OFMessage]]] = msg.getType match {
+  type Result = Writer[Metrics, List[OFMessage]]
+
+  def processMessageInternal(msg: OFMessage)(implicit ec: ExecutionContext): Future[Result] = msg.getType match {
     case OFType.PACKET_IN =>
       processPacketIn(msg.asInstanceOf[OFPacketIn])
     case OFType.ECHO_REQUEST =>
@@ -26,4 +32,21 @@ class MessageProcessor(
     case other =>
       Future.failed(new IllegalArgumentException(other.toString))
   }
+
+  def processMessage(msg: OFMessage)(implicit ec: ExecutionContext): Future[Result] = {
+//    withErrorHandling(withBenchmark(processMessageInternal)).apply(msg)
+    withBenchmark(processMessageInternal).apply(msg)
+  }
+
+  def withBenchmark(f: OFMessage => Future[Result])(implicit ec: ExecutionContext): OFMessage => Future[Result] = msg => {
+    val start = System.nanoTime()
+    val res = f(msg)
+
+    res.map { res =>
+      val spentTime = (System.nanoTime() - start) / 1000000
+      res.tell(List(ProcessingTime -> spentTime))
+    }
+  }
+
+  def withErrorHandling(msg: OFMessage => Future[Result])(implicit ec: ExecutionContext): OFMessage => Future[Result] = ???
 }

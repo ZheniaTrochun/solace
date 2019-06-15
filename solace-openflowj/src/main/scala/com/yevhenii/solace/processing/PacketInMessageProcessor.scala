@@ -3,6 +3,7 @@ package com.yevhenii.solace.processing
 import java.util
 
 import cats.data.Writer
+import cats.instances.list._
 import com.typesafe.scalalogging.Logger
 import com.yevhenii.solace.metrics.Metrics._
 import com.yevhenii.solace.protocol.OFMatch
@@ -28,6 +29,10 @@ trait PacketInMessageProcessor {
     val dlSrc = inMatch.getDataLayerSource
     val bufferId = pi.getBufferId
 
+    val dst = new String(dlDst)
+    val src = new String(dlSrc)
+    val msgSize = pi.getData.length
+
     learnTable(dlSrc, pi.getInPort.getShortPortNumber)
 
     // if the destination is not multicast, look it up
@@ -44,6 +49,7 @@ trait PacketInMessageProcessor {
     }
 
     outPort.map(processPort)
+      .map(_.tell(List(EthernetSender -> src, EthernetReceiver -> dst, SizeEthernet -> msgSize)))
       .map(_.map(List(_)))
   }
 
@@ -73,7 +79,7 @@ trait PacketInMessageProcessor {
 
     Writer(
       List(IncomingOF -> "PACKET_IN", ResultOF -> "FLOW_MOD"),
-      fm
+      fm.build()
     )
   }
 
@@ -97,7 +103,7 @@ trait PacketInMessageProcessor {
 
     Writer(
       List(IncomingOF -> "PACKET_IN", ResultOF -> "PACKET_OUT"),
-      po
+      po.build()
     )
   }
 
