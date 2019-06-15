@@ -34,7 +34,7 @@ class SocketProcessor(
   private var totalTransferred = 0
 
   private val config = ConfigFactory.load()
-  private val version = config.getInt("solace.protocol")
+  private val version = config.getInt("solace.of.protocol")
 
   private val factory = OFFactories.getFactory(
     OFVersion.values()
