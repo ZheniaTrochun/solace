@@ -29,15 +29,15 @@ trait PacketInMessageProcessor {
     val dlSrc = inMatch.getDataLayerSource
     val bufferId = pi.getBufferId
 
-    val dst = new String(dlDst)
-    val src = new String(dlSrc)
+    val dlSrcKey = MacAddress.of(inMatch.getDataLayerDestination).toString
+    val dlDstKey = MacAddress.of(inMatch.getDataLayerDestination).toString
     val msgSize = pi.getData.length
 
-    learnTable(dlSrc, pi.getInPort.getShortPortNumber)
+    learnTable(dlSrc, pi.getInPort.getShortPortNumber, dlSrcKey)
 
     // if the destination is not multicast, look it up
     val outPort: Future[Option[Short]] =
-      if ((dlDst(0) & 0x1) == 0) table.get(new String(dlDst))
+      if ((dlDst(0) & 0x1) == 0) table.get(dlDstKey)
       else Future.successful(None)
 
     outPort.foreach(_.foreach(p => logger.debug(s"Output port [$p]")))
@@ -49,7 +49,7 @@ trait PacketInMessageProcessor {
     }
 
     outPort.map(processPort)
-      .map(_.tell(List(EthernetSender -> src, EthernetReceiver -> dst, SizeEthernet -> msgSize)))
+      .map(_.tell(List(EthernetSender -> dlSrcKey, EthernetReceiver -> dlDstKey, SizeEthernet -> msgSize)))
       .map(_.map(List(_)))
   }
 
@@ -107,19 +107,19 @@ trait PacketInMessageProcessor {
     )
   }
 
-  def learnTable(dlSrc: Array[Byte], inPort: Short)(implicit ec: ExecutionContext): Future[Unit] = {
-    val key = new String(dlSrc)
+  def learnTable(dlSrc: Array[Byte], inPort: Short, dlSrcKey: String)(implicit ec: ExecutionContext): Future[Unit] = {
+//    val key = new String(dlSrc)
 
     def addPort(optPort: Option[Short]): Unit = {
       optPort.filterNot(_ == inPort).fold[Unit] {
-        table.put(key, inPort)
+        table.put(dlSrcKey, inPort)
       } { p =>
-        logger.debug(s"Table is already contains port $p for $dlSrc")
+        logger.debug(s"Table is already contains port $p for $dlSrcKey")
       }
     }
     // if the src is not multicast, learn it
     if ((dlSrc(0) & 0x1) == 0) {
-      table.get(key).map(addPort)
+      table.get(dlSrcKey).map(addPort)
     } else {
       Future.successful ()
     }
