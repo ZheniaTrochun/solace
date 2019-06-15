@@ -9,6 +9,10 @@ services:
       - "6633:6633"
     networks:
       - solace-net
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
     depends_on:
       - redis
       - telegraf
@@ -20,10 +24,6 @@ services:
 
   influxdb:
     image: influxdb:latest
-#    ports:
-#      - "8083:8083"
-#      - "8086:8086"
-#      - "8090:8090"
     env_file:
       - 'influxdb/env.influxdb'
     networks:
@@ -53,6 +53,18 @@ services:
     depends_on:
       - influxdb
       - telegraf
+
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - solace-net
 
 networks:
   solace-net:

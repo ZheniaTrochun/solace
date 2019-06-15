@@ -8,3 +8,6 @@ docker pull hseeberger/scala-sbt
 
 mkdir -p /tmp/docker/grafana/data
 mkdir -p /tmp/docker/influxdb/data
+
+mkdir -p ./grafana/data
+mkdir -p ./influxdb/data
