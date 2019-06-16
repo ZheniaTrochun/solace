@@ -13,7 +13,9 @@ import org.projectfloodlight.openflow.protocol.action.OFAction
 import org.projectfloodlight.openflow.protocol.{OFFactory, OFMessage, OFPacketIn, OFType}
 import org.projectfloodlight.openflow.types.{DatapathId, MacAddress, OFBufferId, OFPort, U64}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 trait PacketInMessageProcessor {
 
@@ -44,18 +46,25 @@ trait PacketInMessageProcessor {
 
     def processPort(optPort: Option[Short]): Writer[Metrics, OFMessage] = {
       logger.debug(s"out port = $optPort")
-      if (bufferId.getInt == 0xffffffff) {
-        packetOut(bufferId, pi, optPort)
-      } else {
+//      if (bufferId.getInt == 0xffffffff) {
+//        packetOut(bufferId, pi, optPort)
+//      } else {
         optPort.fold(packetOut(bufferId, pi, None)) { p =>
           flowAdd(bufferId, inMatch, p, pi.getInPort.getShortPortNumber)
         }
-      }
+//      }
     }
 
-    outPort.map(processPort)
+    val res: Future[Writer[Metrics, Option[OFMessage]]] = outPort.map(processPort)
       .map(_.tell(List(EthernetSender -> dlSrcKey, EthernetReceiver -> dlDstKey, SizeEthernet -> msgSize)))
       .map(_.map(Some(_)))
+
+    res.foreach { w =>
+      val (log, msg) = w.run
+      logger.info(s"PACKET_IN -> dpid:$dpid -> outPort:${Await.result(outPort, 1 second)} -> ${msg.get.getType}")
+    }
+
+    res
   }
 
   def flowAdd(bufferId: OFBufferId, inMatch: OFMatch, outPort: Short, inPort: Short): Writer[Metrics, OFMessage] = {
