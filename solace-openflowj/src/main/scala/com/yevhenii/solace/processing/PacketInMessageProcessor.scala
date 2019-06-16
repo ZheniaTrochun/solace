@@ -21,8 +21,7 @@ trait PacketInMessageProcessor {
 
   val logger = Logger(classOf[PacketInMessageProcessor])
 
-  import scala.concurrent.ExecutionContext.Implicits.global
-  val table: MacTable[String, Short, Future] = new AsyncInMemoryMacTable()
+  val table: MacTable[String, Short, Future] = new AsyncInMemoryMacTable(scala.concurrent.ExecutionContext.Implicits.global)
   val factory: OFFactory
 
   def processPacketIn(pi: OFPacketIn)(implicit ec: ExecutionContext, dpid: DatapathId): Future[Writer[Metrics, Option[OFMessage]]] = {
