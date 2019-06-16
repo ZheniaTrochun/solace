@@ -125,6 +125,7 @@ trait PacketInMessageProcessor {
     def addPort(optPort: Option[Short]): Unit = {
       optPort.filterNot(_ == inPort).fold[Unit] {
         table.put(dlSrcKey, inPort)
+        logger.debug("Port saved")
       } { p =>
         logger.debug(s"Table is already contains port $p for $dlSrcKey ($dlSrc)")
       }
