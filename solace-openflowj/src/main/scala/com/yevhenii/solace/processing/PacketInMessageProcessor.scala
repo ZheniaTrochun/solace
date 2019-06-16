@@ -24,7 +24,7 @@ trait PacketInMessageProcessor {
   val table: MacTable[String, Short, Future] = new AsyncInMemoryMacTable()
   val factory: OFFactory
 
-  def processPacketIn(pi: OFPacketIn)(implicit ec: ExecutionContext, dpid: DatapathId): Future[Writer[Metrics, Option[OFMessage]]] = {
+  def processPacketIn(pi: OFPacketIn)(implicit ec: ExecutionContext, dpid: DatapathId): Future[Writer[Metrics, List[OFMessage]]] = {
     val inMatch = new OFMatch()
     inMatch.loadFromPacket(pi.getData, pi.getInPort.getShortPortNumber)
     val dlDst = inMatch.getDataLayerDestination
@@ -44,24 +44,24 @@ trait PacketInMessageProcessor {
 
     outPort.foreach(_.foreach(p => logger.debug(s"Output port [$p]")))
 
-    def processPort(optPort: Option[Short]): Writer[Metrics, OFMessage] = {
-//      logger.debug(s"out port = $optPort")
-//      if (bufferId.getInt == 0xffffffff) {
-//        packetOut(bufferId, pi, optPort)
-//      } else {
-        optPort.fold(packetOut(bufferId, pi, None)) { p =>
-          flowAdd(bufferId, inMatch, p, pi.getInPort.getShortPortNumber)
-        }
-//      }
+    def processPort(optPort: Option[Short]): Writer[Metrics, List[OFMessage]] = {
+      val res = optPort.fold(packetOut(bufferId, pi, None)) { p =>
+        flowAdd(bufferId, inMatch, p, pi.getInPort.getShortPortNumber)
+      }
+
+      if ((bufferId.getInt == 0xffffffff) && optPort.isDefined) {
+        res.flatMap { mod => packetOut(bufferId, pi, optPort).map(out => List(mod, out)) }
+      } else {
+        res.map(List.apply(_))
+      }
     }
 
-    val res: Future[Writer[Metrics, Option[OFMessage]]] = outPort.map(processPort)
+    val res: Future[Writer[Metrics, List[OFMessage]]] = outPort.map(processPort)
       .map(_.tell(List(EthernetSender -> dlSrcKey, EthernetReceiver -> dlDstKey, SizeEthernet -> msgSize)))
-      .map(_.map(Some(_)))
 
     res.foreach { w =>
       val (log, msg) = w.run
-      logger.info(s"PACKET_IN -> dpid:$dpid -> outPort:${Await.result(outPort, 1 second)} -> ${msg.get.getType}")
+      logger.info(s"PACKET_IN -> dpid:$dpid -> outPort:${Await.result(outPort, 1 second)} -> ${msg.map(_.getType).mkString}")
     }
 
     res

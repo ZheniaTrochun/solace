@@ -9,10 +9,10 @@ import scala.concurrent.Future
 trait HelloMessageProcessor {
   val factory: OFFactory
 
-  def processHello(msg: OFHello): Future[Writer[Metrics, Option[OFMessage]]] = Future.successful {
+  def processHello(msg: OFHello): Future[Writer[Metrics, List[OFMessage]]] = Future.successful {
     Writer(
       List(IncomingOF -> "HELLO", ResultOF -> "HELLO"),
-      None
+      Nil
     )
   }
 }

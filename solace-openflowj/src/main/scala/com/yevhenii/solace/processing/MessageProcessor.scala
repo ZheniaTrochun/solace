@@ -17,7 +17,7 @@ class MessageProcessor(
   with PacketInMessageProcessor
   with ErrorMessageProcessor {
 
-  type Result = Writer[Metrics, Option[OFMessage]]
+  type Result = Writer[Metrics, List[OFMessage]]
 
   def processMessageInternal(msg: OFMessage)(implicit ec: ExecutionContext, dpid: DatapathId): Future[Result] = msg.getType match {
     case OFType.PACKET_IN =>

@@ -10,10 +10,10 @@ trait EchoMessageProcessor {
 
   val factory: OFFactory
 
-  def processEcho(msg: OFEchoRequest): Future[Writer[Metrics, Option[OFMessage]]] = Future.successful {
+  def processEcho(msg: OFEchoRequest): Future[Writer[Metrics, List[OFMessage]]] = Future.successful {
     Writer(
       List(IncomingOF -> OFType.ECHO_REQUEST, ResultOF -> OFType.ECHO_REPLY),
-      Some(factory.echoReply(msg.getData))
+      List(factory.echoReply(msg.getData))
     )
   }
 }

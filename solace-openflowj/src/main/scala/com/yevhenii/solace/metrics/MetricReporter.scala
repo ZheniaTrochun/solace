@@ -33,7 +33,7 @@ class MetricReporter(config: Config, containerId: String = "localhost") extends 
 
     statsdClient.increment("message")
 
-    asMap.foreach {
+    metrics.foreach {
       case (IncomingOF, msg) => statsdClient.increment(s"of_in_$msg", s"dpid:$dpid")
       case (ResultOF, msg) => statsdClient.increment(s"of_out_$msg", s"dpid:$dpid")
       case (SizeOF, size) => statsdClient.count("of_size", size.asInstanceOf[Int], s"dpid:$dpid", s"sender:$sender")

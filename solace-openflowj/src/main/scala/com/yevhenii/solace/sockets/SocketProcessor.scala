@@ -85,7 +85,7 @@ class SocketProcessor(
   }
 
   def processData(data: ByteString): Unit = {
-    def processResponse(respWriterFuture: Future[Writer[Metrics, Option[OFMessage]]]): Unit = {
+    def processResponse(respWriterFuture: Future[Writer[Metrics, List[OFMessage]]]): Unit = {
       respWriterFuture.map {
         respWriter =>
           val withLog = for {
