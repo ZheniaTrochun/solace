@@ -7,7 +7,7 @@ import cats.instances.list._
 import com.typesafe.scalalogging.Logger
 import com.yevhenii.solace.metrics.Metrics._
 import com.yevhenii.solace.protocol.OFMatch
-import com.yevhenii.solace.table.{MacTable, RedisMacTable}
+import com.yevhenii.solace.table.{AsyncInMemoryMacTable, MacTable, RedisMacTable}
 import org.projectfloodlight.openflow.protocol.`match`.MatchField
 import org.projectfloodlight.openflow.protocol.action.OFAction
 import org.projectfloodlight.openflow.protocol.{OFFactory, OFMessage, OFPacketIn, OFType}
@@ -21,7 +21,8 @@ trait PacketInMessageProcessor {
 
   val logger = Logger(classOf[PacketInMessageProcessor])
 
-  val table: MacTable[String, Short, Future]
+  import scala.concurrent.ExecutionContext.Implicits.global
+  val table: MacTable[String, Short, Future] = new AsyncInMemoryMacTable()
   val factory: OFFactory
 
   def processPacketIn(pi: OFPacketIn)(implicit ec: ExecutionContext, dpid: DatapathId): Future[Writer[Metrics, Option[OFMessage]]] = {
@@ -125,7 +126,7 @@ trait PacketInMessageProcessor {
     def addPort(optPort: Option[Short]): Unit = {
       optPort.filterNot(_ == inPort).fold[Unit] {
         table.put(dlSrcKey, inPort)
-        logger.debug("Port saved")
+        logger.debug(s"Port $inPort for $dlSrcKey : $dpid saved")
       } { p =>
         logger.debug(s"Table is already contains port $p for $dlSrcKey ($dlSrc)")
       }

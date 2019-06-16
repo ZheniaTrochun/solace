@@ -10,7 +10,7 @@ import org.projectfloodlight.openflow.types.DatapathId
 import scala.concurrent.{ExecutionContext, Future}
 
 class MessageProcessor(
-  val table: MacTable[String, Short, Future],
+  val t1: MacTable[String, Short, Future],
   val factory: OFFactory
 ) extends HelloMessageProcessor
   with EchoMessageProcessor
