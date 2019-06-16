@@ -17,5 +17,9 @@ object Metrics {
   val EthernetReceiver = "ethernet_receiver"
   val SizeEthernet = "ethernet_size"
 
+  val NetworkPacketCount = "network_packet_count"
+  val NetworkByteCount = "network_byte_count"
+  val NetworkFlowCount = "network_flow_count"
+
   def recordMetric(key: String, value: Any): Writer[Metrics, Unit] = Writer.tell(List(key -> value))
 }

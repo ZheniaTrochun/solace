@@ -4,7 +4,7 @@ import cats.data.Writer
 import cats.instances.list._
 import com.yevhenii.solace.metrics.Metrics._
 import com.yevhenii.solace.table.{MacTable, RedisMacTable}
-import org.projectfloodlight.openflow.protocol.{OFEchoRequest, OFErrorMsg, OFFactory, OFHello, OFMessage, OFPacketIn, OFType}
+import org.projectfloodlight.openflow.protocol.{OFEchoRequest, OFErrorMsg, OFFactory, OFHello, OFMessage, OFPacketIn, OFStatsReply, OFType}
 import org.projectfloodlight.openflow.types.DatapathId
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -15,7 +15,8 @@ class MessageProcessor(
 ) extends HelloMessageProcessor
   with EchoMessageProcessor
   with PacketInMessageProcessor
-  with ErrorMessageProcessor {
+  with ErrorMessageProcessor
+  with StatsReplyProcessor {
 
   type Result = Writer[Metrics, List[OFMessage]]
 
@@ -28,6 +29,8 @@ class MessageProcessor(
       processHello(msg.asInstanceOf[OFHello])
     case OFType.ERROR =>
       processError(msg.asInstanceOf[OFErrorMsg])
+    case OFType.STATS_REPLY =>
+      processStatsReply(msg.asInstanceOf[OFStatsReply])
     case OFType.FEATURES_REPLY =>
       Future.failed(new IllegalArgumentException("Not Implemented yet"))
     case other =>

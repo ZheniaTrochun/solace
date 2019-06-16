@@ -11,13 +11,15 @@ import com.typesafe.config.ConfigFactory
 import com.yevhenii.solace.metrics.MetricReporter
 import com.yevhenii.solace.metrics.Metrics._
 import com.yevhenii.solace.processing.{MessageProcessor, OFSwitch}
-import com.yevhenii.solace.table.{MacTable, RedisMacTable}
+import com.yevhenii.solace.table.MacTable
 import io.netty.buffer.Unpooled
 import org.projectfloodlight.openflow.protocol._
-import org.projectfloodlight.openflow.types.DatapathId
+import org.projectfloodlight.openflow.types.{DatapathId, OFGroup, OFPort, TableId}
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 class SocketProcessor(
   connection: ActorRef,
@@ -42,8 +44,11 @@ class SocketProcessor(
       .find(v => v.wireVersion == version)
       .get
   )
+
   private val processor = new MessageProcessor(macTable, factory)
   private val switch = context.actorOf(Props(classOf[OFSwitch], factory))
+
+  val statsRequests = context.system.scheduler.schedule(StatsRequestFrequency, StatsRequestFrequency, self, AskStats)
 
   // sign death pact: this actor terminates when connection breaks
   context.watch(connection)
@@ -57,6 +62,15 @@ class SocketProcessor(
       totalTransferred += data.size
       processData(data)
 
+    case AskStats =>
+      log.info("asking for stats")
+      val request = factory.buildAggregateStatsRequest()
+        .setOutGroup(OFGroup.ANY)
+        .setOutPort(OFPort.ANY)
+        .setTableId(TableId.ALL)
+        .build()
+      write(request)
+
     case PeerClosed =>
       log.warning("peer closed")
 
@@ -67,6 +81,7 @@ class SocketProcessor(
   override def postStop(): Unit = {
     log.info(s"transferred $totalTransferred bytes from/to [$remote]")
     log.info(s"stopping switch...")
+    statsRequests.cancel()
     context.stop(switch)
   }
 
@@ -132,9 +147,11 @@ class SocketProcessor(
 
 object SocketProcessor {
   val DefaultBufferSize: Int = 65536
+  val StatsRequestFrequency = 10 seconds
 
   case class WriteMessage(message: OFMessage)
   case class WriteRawMessage(bytes: ByteString)
+  case object AskStats
 
   def props(
     connection: ActorRef,
