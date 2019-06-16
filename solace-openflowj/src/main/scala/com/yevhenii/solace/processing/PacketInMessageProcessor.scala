@@ -45,14 +45,14 @@ trait PacketInMessageProcessor {
     outPort.foreach(_.foreach(p => logger.debug(s"Output port [$p]")))
 
     def processPort(optPort: Option[Short]): Writer[Metrics, OFMessage] = {
-      logger.debug(s"out port = $optPort")
-      if (bufferId.getInt == 0xffffffff) {
-        packetOut(bufferId, pi, optPort)
-      } else {
+//      logger.debug(s"out port = $optPort")
+//      if (bufferId.getInt == 0xffffffff) {
+//        packetOut(bufferId, pi, optPort)
+//      } else {
         optPort.fold(packetOut(bufferId, pi, None)) { p =>
           flowAdd(bufferId, inMatch, p, pi.getInPort.getShortPortNumber)
         }
-      }
+//      }
     }
 
     val res: Future[Writer[Metrics, Option[OFMessage]]] = outPort.map(processPort)
