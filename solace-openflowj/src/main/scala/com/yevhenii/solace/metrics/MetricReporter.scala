@@ -33,6 +33,8 @@ class MetricReporter(config: Config, containerId: String = "localhost") extends 
 
     statsdClient.increment("message")
 
+    asMap.foreach { case (key, value) => logger.debug(s"[$key] -> [$value]") }
+
     asMap.foreach {
       case (IncomingOF, msg) => statsdClient.increment(s"of_in_$msg", s"dpid:$dpid")
       case (ResultOF, msg) => statsdClient.increment(s"of_out_$msg", s"dpid:$dpid")
@@ -41,21 +43,4 @@ class MetricReporter(config: Config, containerId: String = "localhost") extends 
       case (key, value) =>
     }
   }
-//    metrics match {
-//    case OpenFlowMetrics(inMsgType, outMsgType, size, sender, time, dpid) =>
-//      statsdClient.increment("message")
-//      statsdClient.increment(s"of_in_$inMsgType", s"dpid:$dpid")
-//      statsdClient.increment(s"of_out_$outMsgType", s"dpid:$dpid")
-//      statsdClient.count(s"of_size", size, s"dpid:$dpid", s"sender:$sender")
-//      statsdClient.time(s"of_in_time", time, s"type:$inMsgType")
-//
-//    case EthernetMetrics(response, size, sender, receiver, time, dpid) =>
-//      statsdClient.increment("message")
-//      statsdClient.increment(s"ethernet_in", s"dpid:$dpid", s"from:$sender", s"to:$receiver")
-//      statsdClient.increment(s"ethernet_out_$response", s"dpid:$dpid", s"from:$sender", s"to:$receiver")
-//      statsdClient.count(s"ethernet_size", size, s"dpid:$dpid", s"from:$sender", s"to:$receiver")
-//
-//    case _ =>
-//
-//  }
 }

@@ -59,7 +59,6 @@ trait PacketInMessageProcessor {
   }
 
   def flowAdd(bufferId: OFBufferId, inMatch: OFMatch, outPort: Short, inPort: Short): Writer[Metrics, OFMessage] = {
-    logger.debug(s"building packet_out [$bufferId] [$inMatch] [$outPort] [$inPort]")
     val fm = factory.buildFlowAdd()
     fm.setBufferId(bufferId)
     fm.setCookie(U64.ZERO)
@@ -90,7 +89,6 @@ trait PacketInMessageProcessor {
   }
 
   def packetOut(bufferId: OFBufferId, pi: OFPacketIn, outPortOpt: Option[Short]): Writer[Metrics, OFMessage] = {
-    logger.debug(s"building packet_out [$bufferId] [$pi] [$outPortOpt]")
     val po = factory.buildPacketOut()
     po.setBufferId(bufferId)
     po.setInPort(pi.getInPort)
@@ -115,8 +113,6 @@ trait PacketInMessageProcessor {
   }
 
   def learnTable(dlSrc: Array[Byte], inPort: Short, dlSrcKey: String)(implicit ec: ExecutionContext, dpid: DatapathId): Future[Unit] = {
-//    val key = new String(dlSrc)
-
     def addPort(optPort: Option[Short]): Unit = {
       optPort.filterNot(_ == inPort).fold[Unit] {
         table.put(dlSrcKey, inPort)

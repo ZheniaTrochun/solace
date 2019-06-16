@@ -32,8 +32,7 @@ object Server {
   val httpEnabled = config.getOrElse("solace.http.enabled", false)
 
   def main(args: Array[String]): Unit = {
-//    val macTable = new RedisMacTable(config)
-    val macTable = new AsyncInMemoryMacTable
+    val macTable = new RedisMacTable(config)
     val metricReporter = new MetricReporter(config, containerId)
 
     val manager = system.actorOf(SocketManager.props(host, ofPort, macTable, metricReporter), "socket-manager")

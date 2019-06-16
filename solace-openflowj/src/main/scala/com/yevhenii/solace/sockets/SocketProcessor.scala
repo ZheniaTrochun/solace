@@ -126,9 +126,6 @@ class SocketProcessor(
     message.writeTo(buffer)
     val nioBuffer = buffer.nioBuffer()
     val bytestring = ByteString(nioBuffer)
-    if (message.getType == OFType.FLOW_MOD) {
-      println("debug is here")
-    }
     connection ! Write(bytestring)
   }
 }
