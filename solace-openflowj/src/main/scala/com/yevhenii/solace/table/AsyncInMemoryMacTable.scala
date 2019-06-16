@@ -6,17 +6,16 @@ import org.projectfloodlight.openflow.types.DatapathId
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AsyncInMemoryMacTable(ec: ExecutionContext)
+class AsyncInMemoryMacTable()
   extends MacTable[String, Short, Future] {
-  implicit val context = ec
   private val table = new ConcurrentHashMap[String, Short]()
 
-  override def contains(key: String)(implicit dpid: DatapathId): Future[Boolean] = Future { table.containsKey(s"$dpid-$key") }
+  override def contains(key: String)(implicit dpid: DatapathId): Future[Boolean] = Future.successful { table.containsKey(key) }
 
-  override def get(key: String)(implicit dpid: DatapathId): Future[Option[Short]] = Future { Option(table.get(s"$dpid-$key")) }
+  override def get(key: String)(implicit dpid: DatapathId): Future[Option[Short]] = Future.successful { Option(table.get(key)) }
 
-  override def put(key: String, value: Short)(implicit dpid: DatapathId): Future[Boolean] = Future {
-    table.put(s"$dpid-$key", value)
+  override def put(key: String, value: Short)(implicit dpid: DatapathId): Future[Boolean] = Future.successful {
+    table.put(key, value)
     true
   }
 }

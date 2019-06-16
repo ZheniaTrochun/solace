@@ -21,7 +21,7 @@ trait PacketInMessageProcessor {
 
   val logger = Logger(classOf[PacketInMessageProcessor])
 
-  val table: MacTable[String, Short, Future] = new AsyncInMemoryMacTable(scala.concurrent.ExecutionContext.Implicits.global)
+  val table: MacTable[String, Short, Future] = new AsyncInMemoryMacTable()
   val factory: OFFactory
 
   def processPacketIn(pi: OFPacketIn)(implicit ec: ExecutionContext, dpid: DatapathId): Future[Writer[Metrics, Option[OFMessage]]] = {
@@ -46,13 +46,13 @@ trait PacketInMessageProcessor {
 
     def processPort(optPort: Option[Short]): Writer[Metrics, OFMessage] = {
       logger.debug(s"out port = $optPort")
-//      if (bufferId.getInt == 0xffffffff) {
-//        packetOut(bufferId, pi, optPort)
-//      } else {
+      if (bufferId.getInt == 0xffffffff) {
+        packetOut(bufferId, pi, optPort)
+      } else {
         optPort.fold(packetOut(bufferId, pi, None)) { p =>
           flowAdd(bufferId, inMatch, p, pi.getInPort.getShortPortNumber)
         }
-//      }
+      }
     }
 
     val res: Future[Writer[Metrics, Option[OFMessage]]] = outPort.map(processPort)
