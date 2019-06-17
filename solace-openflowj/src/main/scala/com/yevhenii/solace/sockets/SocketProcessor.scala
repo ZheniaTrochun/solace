@@ -65,7 +65,6 @@ class SocketProcessor(
     case AskStats =>
       log.info("asking for stats")
       val request = factory.buildAggregateStatsRequest()
-        .setOutGroup(OFGroup.ANY)
         .setOutPort(OFPort.ANY)
         .setTableId(TableId.ALL)
         .build()
