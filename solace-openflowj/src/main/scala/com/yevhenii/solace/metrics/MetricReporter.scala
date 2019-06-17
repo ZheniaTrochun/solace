@@ -38,6 +38,9 @@ class MetricReporter(config: Config, containerId: String = "localhost") extends 
       case (ResultOF, msg) => statsdClient.increment(s"of_out_$msg", s"dpid:$dpid")
       case (SizeOF, size) => statsdClient.count("of_size", size.asInstanceOf[Int], s"dpid:$dpid", s"sender:$sender")
       case (ProcessingTime, time) => statsdClient.count("of_in_time", time.asInstanceOf[Long], s"dpid:$dpid", s"type:$inMsgType")
+      case (NetworkPacketCount, count) => statsdClient.count("network_packet_count", count.asInstanceOf[Long], s"dpid:$dpid")
+      case (NetworkByteCount, count) => statsdClient.count("network_byte_count", count.asInstanceOf[Long], s"dpid:$dpid")
+      case (NetworkFlowCount, count) => statsdClient.count("network_flow_count", count.asInstanceOf[Long], s"dpid:$dpid")
       case (key, value) =>
     }
   }
