@@ -14,7 +14,7 @@ import com.yevhenii.solace.processing.{MessageProcessor, OFSwitch}
 import com.yevhenii.solace.table.MacTable
 import io.netty.buffer.Unpooled
 import org.projectfloodlight.openflow.protocol._
-import org.projectfloodlight.openflow.types.{DatapathId, OFGroup, OFPort, TableId}
+import org.projectfloodlight.openflow.types.{DatapathId, OFPort, TableId}
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
@@ -58,7 +58,6 @@ class SocketProcessor(
   // start out in optimistic write-through mode
   def receive: Receive = {
     case Received(data) =>
-      log.info(s"received raw data, size: ${data.size}")
       totalTransferred += data.size
       processData(data)
 

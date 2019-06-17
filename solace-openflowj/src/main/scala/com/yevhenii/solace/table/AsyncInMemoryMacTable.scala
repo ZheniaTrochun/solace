@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import org.projectfloodlight.openflow.types.DatapathId
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class AsyncInMemoryMacTable()
   extends MacTable[String, Short, Future] {

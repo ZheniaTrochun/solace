@@ -7,19 +7,18 @@ import cats.instances.list._
 import com.typesafe.scalalogging.LazyLogging
 import com.yevhenii.solace.metrics.Metrics._
 import com.yevhenii.solace.protocol.OFMatch
-import com.yevhenii.solace.table.{AsyncInMemoryMacTable, MacTable}
+import com.yevhenii.solace.table.MacTable
 import org.projectfloodlight.openflow.protocol.`match`.MatchField
 import org.projectfloodlight.openflow.protocol.action.OFAction
 import org.projectfloodlight.openflow.protocol.{OFFactory, OFMessage, OFPacketIn}
 import org.projectfloodlight.openflow.types.{DatapathId, MacAddress, OFBufferId, OFPort, U64}
 
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 
 trait PacketInMessageProcessor extends LazyLogging {
 
-  val table: MacTable[String, Short, Future] = new AsyncInMemoryMacTable()
+  val table: MacTable[String, Short, Future]
   val factory: OFFactory
 
   def processPacketIn(pi: OFPacketIn)(implicit ec: ExecutionContext, dpid: DatapathId): Future[Writer[Metrics, List[OFMessage]]] = {
@@ -54,15 +53,8 @@ trait PacketInMessageProcessor extends LazyLogging {
       }
     }
 
-    val res: Future[Writer[Metrics, List[OFMessage]]] = outPort.map(processPort)
+    outPort.map(processPort)
       .map(_.tell(List(EthernetSender -> dlSrcKey, EthernetReceiver -> dlDstKey, SizeEthernet -> msgSize)))
-
-    res.foreach { w =>
-      val (log, msg) = w.run
-      logger.info(s"PACKET_IN -> dpid:$dpid -> outPort:${Await.result(outPort, 1 second)} -> ${msg.map(_.getType).mkString}")
-    }
-
-    res
   }
 
   def flowAdd(bufferId: OFBufferId, inMatch: OFMatch, outPort: Short, inPort: Short): Writer[Metrics, OFMessage] = {
@@ -123,7 +115,6 @@ trait PacketInMessageProcessor extends LazyLogging {
     def addPort(optPort: Option[Short]): Unit = {
       optPort.filterNot(_ == inPort).fold[Unit] {
         table.put(dlSrcKey, inPort)
-        logger.debug(s"Port $inPort for $dlSrcKey : $dpid saved")
       } { p =>
         logger.debug(s"Table is already contains port $p for $dlSrcKey ($dlSrc)")
       }

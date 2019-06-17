@@ -5,7 +5,7 @@ import java.net.InetSocketAddress
 import akka.actor.{Actor, ActorLogging, Props, SupervisorStrategy}
 import akka.io._
 import com.yevhenii.solace.metrics.MetricReporter
-import com.yevhenii.solace.table.{MacTable, RedisMacTable}
+import com.yevhenii.solace.table.MacTable
 
 import scala.concurrent.{ExecutionContext, Future}
 

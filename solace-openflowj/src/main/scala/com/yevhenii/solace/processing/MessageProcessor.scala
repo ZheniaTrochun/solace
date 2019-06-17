@@ -4,14 +4,14 @@ import cats.data.Writer
 import cats.instances.list._
 import com.typesafe.scalalogging.LazyLogging
 import com.yevhenii.solace.metrics.Metrics._
-import com.yevhenii.solace.table.{MacTable, RedisMacTable}
-import org.projectfloodlight.openflow.protocol.{OFEchoRequest, OFErrorMsg, OFFactory, OFHello, OFMessage, OFPacketIn, OFStatsReply, OFType}
+import com.yevhenii.solace.table.MacTable
+import org.projectfloodlight.openflow.protocol._
 import org.projectfloodlight.openflow.types.DatapathId
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class MessageProcessor(
-  val t1: MacTable[String, Short, Future],
+  val table: MacTable[String, Short, Future],
   val factory: OFFactory
 ) extends HelloMessageProcessor
   with EchoMessageProcessor
