@@ -1,2 +1,2 @@
-influxdb/data/ linguist-vendored
-grafana/data/ linguist-vendored
+influxdb/data/* linguist-vendored
+grafana/data/* linguist-vendored
