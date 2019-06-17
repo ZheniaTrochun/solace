@@ -2,6 +2,7 @@ package com.yevhenii.solace.processing
 
 import cats.data.Writer
 import cats.instances.list._
+import com.typesafe.scalalogging.LazyLogging
 import com.yevhenii.solace.metrics.Metrics._
 import com.yevhenii.solace.table.{MacTable, RedisMacTable}
 import org.projectfloodlight.openflow.protocol.{OFEchoRequest, OFErrorMsg, OFFactory, OFHello, OFMessage, OFPacketIn, OFStatsReply, OFType}
@@ -16,7 +17,8 @@ class MessageProcessor(
   with EchoMessageProcessor
   with PacketInMessageProcessor
   with ErrorMessageProcessor
-  with StatsReplyProcessor {
+  with StatsReplyProcessor
+  with LazyLogging {
 
   type Result = Writer[Metrics, List[OFMessage]]
 

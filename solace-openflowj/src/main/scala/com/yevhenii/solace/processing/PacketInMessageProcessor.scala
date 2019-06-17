@@ -4,22 +4,20 @@ import java.util
 
 import cats.data.Writer
 import cats.instances.list._
-import com.typesafe.scalalogging.Logger
+import com.typesafe.scalalogging.LazyLogging
 import com.yevhenii.solace.metrics.Metrics._
 import com.yevhenii.solace.protocol.OFMatch
-import com.yevhenii.solace.table.{AsyncInMemoryMacTable, MacTable, RedisMacTable}
+import com.yevhenii.solace.table.{AsyncInMemoryMacTable, MacTable}
 import org.projectfloodlight.openflow.protocol.`match`.MatchField
 import org.projectfloodlight.openflow.protocol.action.OFAction
-import org.projectfloodlight.openflow.protocol.{OFFactory, OFMessage, OFPacketIn, OFType}
+import org.projectfloodlight.openflow.protocol.{OFFactory, OFMessage, OFPacketIn}
 import org.projectfloodlight.openflow.types.{DatapathId, MacAddress, OFBufferId, OFPort, U64}
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-trait PacketInMessageProcessor {
-
-  val logger = Logger(classOf[PacketInMessageProcessor])
+trait PacketInMessageProcessor extends LazyLogging {
 
   val table: MacTable[String, Short, Future] = new AsyncInMemoryMacTable()
   val factory: OFFactory
